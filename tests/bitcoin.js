@@ -160,3 +160,87 @@ test('Test Create Transaction', async t => {
 
   t.end();
 });
+
+test('Test validateUtxo', async t => {
+  t.plan(2);
+  const utxo = bitcoinUtils.getFakeUtxos({
+    address: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+    txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
+    vout: 1,
+    satoshis: 124000000,
+  });
+  t.equal(bitcoinUtils.validateUtxo(utxo), true);
+  utxo[0].coinbase = true;
+  t.throws(
+    () => bitcoinUtils.validateUtxo(utxo),
+    'Invalid utxo. No Coinbase coins allowed.'
+  );
+  t.end();
+});
+
+test('Test compareUtxoSets', async t => {
+  const utxos1 = [
+    ...bitcoinUtils.getFakeUtxos({
+      address: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+      txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
+      vout: 1,
+      satoshis: 124000000,
+    }),
+    ...bitcoinUtils.getFakeUtxos({
+      address: 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b',
+      txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de41',
+      vout: 1,
+      satoshis: 124000000,
+    }),
+    ...bitcoinUtils.getFakeUtxos({
+      address: 'myBc8uZJeyc5wo987cSvUa5n1HbTdpXj7i',
+      txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de42',
+      vout: 1,
+      satoshis: 124000000,
+    }),
+  ];
+  const utxos2 = utxos1.slice(); // Copy
+
+  t.plan(12);
+  t.equal(bitcoinUtils.compareUtxoSets(utxos1, utxos2), true);
+
+  // Utxo has different txid
+  utxos2.splice(
+    0,
+    1,
+    ...bitcoinUtils.getFakeUtxos({
+      address: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+      txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de43',
+      vout: 1,
+      satoshis: 124000000,
+    })
+  );
+  try {
+    bitcoinUtils.compareUtxoSets(utxos1, utxos2);
+  } catch (err) {
+    t.equal(err.message, 'Utxo change');
+    t.equal(err.data.length, 1);
+    t.equal(err.data[0], 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV');
+  }
+
+  // Missing utxo
+  utxos2.splice(0, 1);
+  try {
+    bitcoinUtils.compareUtxoSets(utxos1, utxos2);
+  } catch (err) {
+    t.equal(err.message, 'Utxo change');
+    t.equal(err.data.length, 1);
+    t.equal(err.data[0], 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV');
+  }
+  try {
+    bitcoinUtils.compareUtxoSets(utxos1, []);
+  } catch (err) {
+    t.equal(err.message, 'Utxo change');
+    t.equal(err.data.length, 3);
+    t.equal(err.data[0], 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV');
+    t.equal(err.data[1], 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b');
+    t.equal(err.data[2], 'myBc8uZJeyc5wo987cSvUa5n1HbTdpXj7i');
+  }
+
+  t.end();
+});

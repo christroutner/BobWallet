@@ -448,6 +448,20 @@ class Coordinator {
     ) {
       setImmediate(async () => {
         try {
+          if (!this.DISABLE_UTXO_FETCH) {
+            // Re-check all utxos
+            const fromAddresses = this.transaction.alices.map(
+              alice => alice.fromAddress
+            );
+            const utxos = await this.bitcoinUtils.getUtxos(fromAddresses);
+            try {
+              this.bitcoinUtils.compareUtxoSets(this.transaction.utxos, utxos);
+            } catch (err) {
+              consoleLog.error(`Invalid utxos`, err);
+              this.blameGame(err.data);
+              return;
+            }
+          }
           const signedTxs = alices.map(alice => alice.txSigned);
           const { serialized, txid } = this.bitcoinUtils.combineTxs({
             tx: this.finalTransaction,
@@ -572,6 +586,20 @@ class Coordinator {
     this.completedRounds[round_id] = {
       success: false,
       error: 'Blinding state timed out',
+      round_id,
+      date: new Date().getTime(),
+    };
+    this.initRound();
+  }
+
+  blameGame(addresses) {
+    // A user changed their utxo set (possible double spend)
+    consoleLog.warn('User changed their utxo set', addresses);
+    // TODO: Punish the users with addresses
+    const round_id = this.round_id;
+    this.completedRounds[round_id] = {
+      success: false,
+      error: 'User changed their utxo set',
       round_id,
       date: new Date().getTime(),
     };

@@ -223,6 +223,32 @@ class Bitcoin {
     });
     return balance;
   }
+  compareUtxoSets(utxos1, utxos2) {
+    const mapUtxos = {};
+    utxos2.map(utxo => (mapUtxos[utxo.txid] = true));
+    const remaining = utxos1.filter(utxo => {
+      if (mapUtxos[utxo.txid]) {
+        return false;
+      } else {
+        return true;
+      }
+    });
+    if (remaining.length > 0 || utxos1.length !== utxos2.length) {
+      const err = new Error('Utxo change');
+      err.data = remaining.map(obj => obj.address);
+      throw err;
+    }
+    return true;
+  }
+  validateUtxo(utxos) {
+    utxos.map(utxo => {
+      if (utxo.coinbase) {
+        throw new Error('Invalid utxo. No Coinbase coins allowed.');
+      }
+      return true;
+    });
+    return true;
+  }
 
   getUtxos(address) {
     if (this.USE_BCOIN) {
@@ -269,7 +295,10 @@ class Bitcoin {
           addresses: Array.isArray(address) ? address : [address],
         },
       })
-        .then(res => resolve(res.data))
+        .then(res => {
+          this.validateUtxo(res.data);
+          resolve(res.data);
+        })
         .catch(reject);
     });
 
