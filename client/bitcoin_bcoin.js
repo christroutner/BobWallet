@@ -452,7 +452,7 @@ class Bitcoin {
         throw new Error('Alice missing utxo');
       }
       const totalSatoshis = alice.utxos.reduce(
-        (previous, utxo) => previous + parseInt(utxo.value),
+        (previous, utxo) => previous + parseInt(utxo.value, 10),
         0
       );
       const aliceFees = fees * alice.utxos.length;
@@ -537,28 +537,27 @@ class Bitcoin {
   // Client only
   verifyTransaction({ alices, bobs, fromAddress, changeAddress, toAddress }) {
     // Make sure our addresses are in the pool
-    let verifyTo = false;
-    let verifyFrom = false;
-    let verifyChange = false;
-    const fromAddresses = alices.map(alice => {
-      if (alice.fromAddress === fromAddress) {
-        verifyFrom = true;
-      }
-      if (alice.changeAddress === changeAddress) {
-        verifyChange = true;
-      }
-      return alice.fromAddress;
-    });
-    bobs.map(bob => {
-      if (bob.toAddress === toAddress) {
-        verifyTo = true;
+    let verifyAlice = false;
+    let verifyBob = false;
+    alices.map(alice => {
+      if (
+        alice.fromAddress === fromAddress &&
+        alice.changeAddress === changeAddress
+      ) {
+        verifyAlice = true;
       }
       return true;
     });
-    if (!verifyTo || !verifyFrom || !verifyChange) {
+    bobs.map(bob => {
+      if (bob.toAddress === toAddress) {
+        verifyBob = true;
+      }
+      return true;
+    });
+    if (!verifyBob || !verifyAlice) {
       throw new Error('All your addresses are not in the pool! Aborting');
     }
-    return fromAddresses;
+    return true;
   }
 }
 

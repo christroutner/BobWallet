@@ -83,9 +83,10 @@ class Settings extends Component {
             onPress={() => Linking.openURL(GITHUB_URL)}
           /> */}
           <Button
-            text="Backup Wallet"
+            text="Download Backup"
             color={colors.darkgray}
             onPress={() => {
+              ActionsSettings.downloadBackup();
               ActionsSettings.copyBackup();
               this.flash('Copied Backup to Clipboard.');
             }}
@@ -102,6 +103,7 @@ class Settings extends Component {
                 ActionsNav.goWelcome();
               } else {
                 ActionsSettings.copyBackup();
+                ActionsSettings.downloadBackup();
                 this.flash('Copied Backup to Clipboard.');
                 this.setState({ deleteWallet: true });
               }

@@ -388,7 +388,7 @@ class Client {
     }
 
     const serverAddress = this.serverAddress;
-    const { preverify, state } = this.serverStatus;
+    const { preverify, state, url } = this.serverStatus;
     if (!preverify) throw new Error('Missing preverify');
     if (state !== SERVER_STATES.join) {
       throw new Error(`Server is not in join state: ${state}`);
@@ -432,6 +432,7 @@ class Client {
       serverAddress,
       // myUtxos,
       utxos,
+      outputUrl: url,
     };
     this.setState(CLIENT_STATES.joined);
     let balance;
@@ -458,7 +459,7 @@ class Client {
       N,
       E,
     });
-    const { signed, url } = await this.fetchAPI('/blinding', {
+    const { signed } = await this.fetchAPI('/blinding', {
       method: 'POST',
       body: {
         fromAddress,
@@ -475,7 +476,6 @@ class Client {
     });
     if (!result) throw new Error('Signature did not verify');
     this.parameters.unblinded = unblinded;
-    this.parameters.outputUrl = url;
     console.log(`2. ${fromAddress} Blinded output`);
     this.setState(CLIENT_STATES.blind);
   }

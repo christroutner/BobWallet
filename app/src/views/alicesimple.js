@@ -28,7 +28,7 @@ class AliceSimple extends Component {
   flash(message) {
     this.setState({ flash: message });
     clearTimeout(this.tflash);
-    this.tflash = setTimeout(() => this.setState({ flash: null }), 2000);
+    this.tflash = setTimeout(() => this.setState({ flash: null }), 8000);
   }
 
   render() {
@@ -207,7 +207,7 @@ class AliceSimple extends Component {
                 </Text>
                 {computedServerStatus && (
                   <Text style={{ marginTop: 6, color: colors.gray }}>
-                    Network fee per round:{' '}
+                    Transaction miner fee per round:{' '}
                     {formatSat(safeServerStatus.fees, ticker, wholeNumbers)}
                   </Text>
                 )}
@@ -241,7 +241,7 @@ class AliceSimple extends Component {
               text="Copy Wallet Backup"
               onPress={() => {
                 ActionsSettings.copyBackup();
-                this.flash('Copied Wallet Backup.');
+                this.flash('Copied Wallet Backup to Clipboard.');
               }}
             />
           </View>

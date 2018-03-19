@@ -91,6 +91,7 @@ class Coordinator {
       version: SERVER_VERSION,
       preverify: uuidv4(),
       autostart: this.AUTO_START_ROUNDS,
+      url: this.OUTPUT_URL,
     };
     this.round_id = uuidv4();
     this.alices = {};
@@ -320,7 +321,7 @@ class Coordinator {
       this.roundState = SERVER_STATES.outputs;
       this.troundTimeout = setTimeout(() => this.roundTimeout(), ROUND_TIMEOUT);
     }
-    return { signed, url: this.OUTPUT_URL };
+    return { signed };
   }
 
   outputs({ unblinded, toAddress }) {

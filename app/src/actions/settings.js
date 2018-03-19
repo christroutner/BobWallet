@@ -9,7 +9,7 @@ class ActionsSettings {
     store.save();
   }
 
-  copyBackup(settings) {
+  prepareBackup(settings) {
     let string;
     if (settings) {
       settings.lastBackup = new Date().getTime();
@@ -38,9 +38,16 @@ class ActionsSettings {
         }
       }
     }
-    Clipboard.setString(string);
-    download(string);
     return string;
+  }
+
+  copyBackup(settings) {
+    const string = this.prepareBackup(settings);
+    Clipboard.setString(string);
+  }
+  downloadBackup(settings) {
+    const string = this.prepareBackup(settings);
+    download(string);
   }
   async setBackup(backup) {
     try {

@@ -29,6 +29,7 @@ Which coin should we focus on first? Vote with your favorite currency!
 
 ## Advantages
 * [You don't need to trust anyone with your Bitcoin](https://github.com/bobwallet/bobwallet/blob/master/docs/blindlink.md)
+* No extra fees except for the standard Bitcoin transaction miners fee per round
 * Rounds are quick (Between 30 to 90 seconds per round)
 * Can support many participants. More users, more privacy
 * No need to download, compile or configure a complex program. It's as simple as visiting a website in your Tor Browser. This also makes it fully cross platform on ANY device that can run a Tor Browser
@@ -48,6 +49,10 @@ Which coin should we focus on first? Vote with your favorite currency!
 
 * Why do I have to use Tor?
   - Tor is necessary to protect the server from determining your Private Wallet addresses. No one but you knows the addresses of your Private Wallet.
+
+
+* Are there any extra fees to us Bob Wallet?
+  - No. The only fees you pay are the standard Bitcoin miner fee for each transaction.
 
 
 * Why do I have to wait so long for Bitcoin to show up in my Private Wallet?

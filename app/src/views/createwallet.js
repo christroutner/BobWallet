@@ -17,12 +17,18 @@ class CreateWallet extends Component {
     this.state = {
       aliceSeed: '',
       bobSeed: '',
-      copiedBackup: false,
+      nextSelected: false,
       flash: null,
     };
   }
   render() {
-    const { aliceSeed, bobSeed, copiedBackup, flash } = this.state;
+    const { aliceSeed, bobSeed, nextSelected, flash } = this.state;
+    const invalidWallets = !(
+      ActionsClient.isValidSeed(aliceSeed) &&
+      (ActionsClient.isValidSeed(bobSeed) ||
+        ActionsClient.isValidXPub(bobSeed) ||
+        !ActionsClient.isInvalid(bobSeed))
+    );
     return (
       <View
         style={{
@@ -49,7 +55,7 @@ class CreateWallet extends Component {
             style={{ flex: 1 }}
             value={aliceSeed}
             onChangeText={aliceSeed =>
-              this.setState({ copiedBackup: false, flash: null, aliceSeed })
+              this.setState({ nextSelected: false, flash: null, aliceSeed })
             }
           />
           <Button
@@ -58,7 +64,7 @@ class CreateWallet extends Component {
             color={colors.darkgray}
             onPress={() =>
               this.setState({
-                copiedBackup: false,
+                nextSelected: false,
                 flash: null,
                 aliceSeed: ActionsClient.newMnemonic(),
               })
@@ -85,7 +91,7 @@ class CreateWallet extends Component {
             style={{ flex: 1 }}
             value={bobSeed}
             onChangeText={bobSeed =>
-              this.setState({ copiedBackup: false, flash: null, bobSeed })
+              this.setState({ nextSelected: false, flash: null, bobSeed })
             }
           />
           <Button
@@ -94,7 +100,7 @@ class CreateWallet extends Component {
             color={colors.darkgray}
             onPress={() =>
               this.setState({
-                copiedBackup: false,
+                nextSelected: false,
                 flash: null,
                 bobSeed: ActionsClient.newMnemonic(),
               })
@@ -104,13 +110,13 @@ class CreateWallet extends Component {
 
         <View style={{ alignSelf: 'center', flexDirection: 'row' }}>
           <Button
-            style={{ width: 120 }}
+            style={{ width: 140 }}
             text="Back"
             onPress={() => ActionsNav.goWelcome()}
           />
           <Button
-            color={copiedBackup ? colors.red : colors.green}
-            style={{ width: !copiedBackup ? 120 : undefined }}
+            color={invalidWallets ? colors.darkgray : colors.green}
+            style={{ width: 140 }}
             // disabled={
             //   !(
             //     ActionsClient.isValidSeed(aliceSeed) &&
@@ -120,28 +126,32 @@ class CreateWallet extends Component {
             //         !ActionsClient.isInvalid(bobSeed)))
             //   )
             // }
-            disabled={
-              !(
-                ActionsClient.isValidSeed(aliceSeed) &&
-                (ActionsClient.isValidSeed(bobSeed) ||
-                  ActionsClient.isValidXPub(bobSeed) ||
-                  !ActionsClient.isInvalid(bobSeed))
-              )
-            }
-            text={
-              !copiedBackup ? 'Copy Backup' : 'Did you save the backup file?'
-            }
+            // disabled={
+            //   !(
+            //     ActionsClient.isValidSeed(aliceSeed) &&
+            //     (ActionsClient.isValidSeed(bobSeed) ||
+            //       ActionsClient.isValidXPub(bobSeed) ||
+            //       !ActionsClient.isInvalid(bobSeed))
+            //   )
+            // }
+            text={!nextSelected ? 'Next' : 'Download Backup'}
             onPress={() => {
-              if (!copiedBackup) {
-                ActionsSettings.copyBackup({ aliceSeed, bobSeed });
+              if (invalidWallets) {
                 this.setState({
-                  flash: 'Copied Backup to Clipboard.',
+                  flash: 'Please enter valid Wallets.',
                 });
               } else {
-                ActionsClient.initAlice({ aliceSeed, bobSeed });
-                ActionsNav.goHome();
+                if (!nextSelected) {
+                  this.setState({
+                    nextSelected: true,
+                  });
+                } else {
+                  ActionsSettings.downloadBackup({ aliceSeed, bobSeed });
+                  ActionsSettings.copyBackup({ aliceSeed, bobSeed });
+                  ActionsClient.initAlice({ aliceSeed, bobSeed });
+                  ActionsNav.goHome();
+                }
               }
-              this.setState({ copiedBackup: true });
             }}
           />
         </View>
