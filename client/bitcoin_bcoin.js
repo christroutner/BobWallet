@@ -224,18 +224,30 @@ class Bitcoin {
     return balance;
   }
   compareUtxoSets(utxos1, utxos2) {
-    const mapUtxos = {};
-    utxos2.map(utxo => (mapUtxos[utxo.txid] = true));
-    const remaining = utxos1.filter(utxo => {
-      if (mapUtxos[utxo.txid]) {
-        return false;
-      } else {
-        return true;
+    const mapUtxos1 = {};
+    utxos1.map(utxo => (mapUtxos1[utxo.address] = {}));
+    utxos1.map(utxo => (mapUtxos1[utxo.address][utxo.txid] = true));
+    const mapUtxos2 = {};
+    utxos2.map(utxo => (mapUtxos2[utxo.address] = {}));
+    utxos2.map(utxo => (mapUtxos2[utxo.address][utxo.txid] = true));
+    utxos2.map(utxo => {
+      if (mapUtxos1[utxo.address] && mapUtxos1[utxo.address][utxo.txid]) {
+        delete mapUtxos1[utxo.address][utxo.txid];
+        if (Object.keys(mapUtxos1[utxo.address]).length === 0) {
+          delete mapUtxos1[utxo.address];
+        }
+      }
+      if (mapUtxos2[utxo.address] && mapUtxos2[utxo.address][utxo.txid]) {
+        delete mapUtxos2[utxo.address][utxo.txid];
+        if (Object.keys(mapUtxos2[utxo.address]).length === 0) {
+          delete mapUtxos2[utxo.address];
+        }
       }
     });
-    if (remaining.length > 0 || utxos1.length !== utxos2.length) {
+    const addresses = [...Object.keys(mapUtxos1), ...Object.keys(mapUtxos2)];
+    if (addresses.length > 0) {
       const err = new Error('Utxo change');
-      err.data = remaining.map(obj => obj.address);
+      err.data = addresses;
       throw err;
     }
     return true;
