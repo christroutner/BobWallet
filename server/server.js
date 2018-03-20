@@ -161,6 +161,10 @@ app.post('/verify', async (req, res) => {
   LOG && console.log('/verify', req.body);
   res.json(coordinator.verify(req.body));
 });
+app.post('/proof', async (req, res) => {
+  LOG && console.log('/proof', req.body);
+  res.json(coordinator.proof(req.body));
+});
 
 // if (SERVE_STATIC_APP && PUBLIC_DIR) {
 //   app.use('/', express.static(path.join(__dirname, PUBLIC_DIR)));

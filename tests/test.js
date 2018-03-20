@@ -592,3 +592,63 @@ test('7 Test Max Fees', async t => {
   coordinator2.exit();
   t.end();
 });
+
+test('8 Test Blame Game', async t => {
+  t.plan(4);
+
+  const coordinator = new Coordinator({
+    AUTO_START_ROUNDS: false,
+    DISABLE_BROADCAST: true,
+    DISABLE_UTXO_FETCH: true,
+    OUTPUTS_TIMEOUT: 50, // Speed up timeout
+    BLAME_TIMEOUT: 10,
+    bitcoinUtils,
+  });
+  const client1 = new Client({
+    bitcoinUtils,
+    mockFetch: (url, params) => coordinator.mockFetch(url, params),
+    aliceSeed: seed1,
+    bobSeed: seed1,
+    FAKE_UTXOS: utxo1,
+    MAX_DELAY: 0,
+  });
+  const client2 = new Client({
+    bitcoinUtils,
+    mockFetch: (url, params) => coordinator.mockFetch(url, params),
+    aliceSeed: seed2,
+    bobSeed: seed2,
+    FAKE_UTXOS: utxo2,
+    MAX_DELAY: 0,
+  });
+  await client1.connect();
+  await client2.connect();
+  await client1.refreshState();
+  await client2.refreshState();
+  await client1.join();
+  await client2.join();
+  await client1.blind();
+  await client2.blind();
+  await client1.refreshState();
+  t.equal(SERVER_STATES.outputs, coordinator.roundState);
+  while (coordinator.roundState === SERVER_STATES.outputs) {
+    // Wait until timeout
+    await coordinator.wait(10);
+  }
+  t.equal(coordinator.roundState, SERVER_STATES.blamegame);
+  await client1.refreshState();
+  while (coordinator.roundState === SERVER_STATES.blamegame) {
+    await coordinator.wait(10);
+  }
+  await client1.refreshState();
+  await client2.refreshState();
+  t.equal(Object.keys(coordinator.punishedAddresses).length, 1);
+  t.equal(
+    coordinator.punishedAddresses['mrhMGkaxELdoYRSKC2f2MVfs6qpUxHYYcR'],
+    1
+  );
+
+  await client1.disconnect();
+  await client2.disconnect();
+  coordinator.exit();
+  t.end();
+});

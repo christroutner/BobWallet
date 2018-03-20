@@ -178,7 +178,7 @@ test('Test validateUtxo', async t => {
   t.end();
 });
 
-test.only('Test compareUtxoSets', async t => {
+test('Test compareUtxoSets', async t => {
   t.plan(15);
   let utxos1 = [
     ...bitcoinUtils.getFakeUtxos({

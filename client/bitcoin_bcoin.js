@@ -243,8 +243,10 @@ class Bitcoin {
           delete mapUtxos2[utxo.address];
         }
       }
+      return true;
     });
-    const addresses = [...Object.keys(mapUtxos1), ...Object.keys(mapUtxos2)];
+    const combined = Object.assign({}, mapUtxos1, mapUtxos2);
+    const addresses = Object.keys(combined);
     if (addresses.length > 0) {
       const err = new Error('Utxo change');
       err.data = addresses;

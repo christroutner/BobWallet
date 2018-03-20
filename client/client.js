@@ -312,6 +312,11 @@ class Client {
         res.state === SERVER_STATES.join
       ) {
         await this.join();
+      } else if (
+        this.roundState === CLIENT_STATES.output &&
+        res.state === SERVER_STATES.blamegame
+      ) {
+        await this.sendBlameProof();
       }
       this.serverError = null;
       console.log('Updated server status');
@@ -484,18 +489,40 @@ class Client {
     if (this.roundState !== CLIENT_STATES.blinding) {
       throw new Error('Wrong state');
     }
-    const { unblinded, toAddress, outputUrl } = this.parameters;
+    const {
+      unblinded,
+      toAddress,
+      outputUrl,
+      preverify,
+      N,
+      E,
+    } = this.parameters;
     console.log(`3. ${toAddress} Sending toAddress`);
-    await this.fetchAPI('/outputs', {
+    const { blinded, r } = BlindSignature.blind({
+      message: preverify,
+      N,
+      E,
+    });
+    const { signed } = await this.fetchAPI('/outputs', {
       baseUrl: outputUrl, // TODO: Enforce seperate URL?
       method: 'POST',
       body: {
         toAddress,
         unblinded,
+        proof: blinded.toString(),
       },
     });
+    const proof = BlindSignature.unblind({ signed, N, r }).toString();
+    const result = BlindSignature.verify({
+      unblinded: proof,
+      N,
+      E,
+      message: preverify,
+    });
+    if (!result) throw new Error('Signature did not verify');
+    this.parameters.proof = proof;
     this.setState(CLIENT_STATES.output);
-    console.log(`3. ${toAddress} Verified toAddress`);
+    console.log(`3. Verified toAddress ${toAddress}`);
   }
 
   async getTx() {
@@ -629,6 +656,20 @@ class Client {
       // }
       if (this.callbackRoundComplete) this.callbackRoundComplete(finalTx);
     }
+  }
+
+  async sendBlameProof() {
+    if (!this.parameters || this.parameters.proved) return;
+    const { proof, fromAddress, uuid } = this.parameters;
+    await this.fetchAPI('/proof', {
+      method: 'POST',
+      body: {
+        proof,
+        uuid,
+        fromAddress,
+      },
+    });
+    this.parameters.proved = true;
   }
 
   // torFetchNode(url, params) {

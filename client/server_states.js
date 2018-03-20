@@ -3,6 +3,7 @@ const SERVER_STATES = {
   blinding: 'blinding',
   outputs: 'outputs',
   signing: 'signing',
+  blamegame: 'blamegame',
 };
 
 module.exports = SERVER_STATES;

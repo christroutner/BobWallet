@@ -3,18 +3,20 @@ const SERVER_VERSION = require('../package.json').version;
 const SERVER_STATES = require('../client/server_states');
 const path = require('path');
 let consoleLog = {
-  info: (...msg) => console.log(...msg),
-  warn: (...msg) => console.log(...msg),
-  error: (...msg) => console.log(...msg),
-  log: (...msg) => console.log(...msg),
+  info: (...msg) => console.log('SERVER: ', ...msg),
+  warn: (...msg) => console.log('SERVER: ', ...msg),
+  error: (...msg) => console.log('SERVER: ', ...msg),
+  log: (...msg) => console.log('SERVER: ', ...msg),
 };
 
 const CHECKIN_TIMEOUT = 30 * 1000; // Assume user is out if they haven't checked in in 30 seconds
 const CHECK_FOR_TIMEOUTS = 3 * 1000; // Every 3 seconds check if alice timed out
-const ROUND_TIMEOUT = 60 * 1000; // If the round doesn't complete in 60 seconds reset it
 const BLINDING_TIMEOUT = 30 * 1000;
+const dOUTPUTS_TIMEOUT = 30 * 1000;
+const SIGNING_TIMEOUT = 30 * 1000;
+const dBLAME_TIMEOUT = 30 * 1000;
 const MAX_ROUND_HISTORY = 30;
-const AUTO_START_DELAY = 30 * 1000;
+const AUTO_START_DELAY = 10 * 1000;
 
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -39,6 +41,8 @@ class Coordinator {
     RSA_KEY_SIZE = 1024,
     OUTPUT_URL,
     LOG_TO_FILE = false,
+    OUTPUTS_TIMEOUT = dOUTPUTS_TIMEOUT,
+    BLAME_TIMEOUT = dBLAME_TIMEOUT,
   }) {
     if (LOG_TO_FILE) {
       consoleLog = require('simple-node-logger').createSimpleLogger({
@@ -60,6 +64,9 @@ class Coordinator {
     this.FEE_PER_INPUT = FEE_PER_INPUT;
     this.AUTO_START_ROUNDS = !!AUTO_START_ROUNDS;
     this.RSA_KEY_SIZE = RSA_KEY_SIZE;
+    this.OUTPUTS_TIMEOUT = OUTPUTS_TIMEOUT;
+    this.BLAME_TIMEOUT = BLAME_TIMEOUT;
+    this.punishedAddresses = {}; // TODO: Persist
     this.initRound();
   }
   getAlices() {
@@ -73,9 +80,10 @@ class Coordinator {
   }
 
   initRound() {
-    clearTimeout(this.troundTimeout);
-    clearTimeout(this.tblindingTimeout);
     clearTimeout(this.tautoStartRounds);
+    clearTimeout(this.tblindingTimeout);
+    clearTimeout(this.toutputTimeout);
+    clearTimeout(this.tsigningTimeout);
     this.tautoStartRounds = null;
     this.key = BlindSignature.keyGeneration({ b: this.RSA_KEY_SIZE });
     this.keyParameters = {
@@ -317,14 +325,18 @@ class Coordinator {
     this.alices[fromAddress].signed = true;
     if (this.getAlices().filter(alice => !alice.signed).length === 0) {
       // All alices signed. Next stage outputs
-      clearTimeout(this.tblindingTimeout);
       this.roundState = SERVER_STATES.outputs;
-      this.troundTimeout = setTimeout(() => this.roundTimeout(), ROUND_TIMEOUT);
+      clearTimeout(this.tblindingTimeout);
+      clearTimeout(this.toutputTimeout);
+      this.toutputTimeout = setTimeout(
+        () => this.outputsTimeout(),
+        this.OUTPUTS_TIMEOUT
+      );
     }
     return { signed };
   }
 
-  outputs({ unblinded, toAddress }) {
+  outputs({ unblinded, toAddress, proof }) {
     if (this.roundState !== SERVER_STATES.outputs) {
       return { error: 'Wrong state' };
     }
@@ -347,6 +359,15 @@ class Coordinator {
       consoleLog.warn(`2: Invalid signature ${toAddress}`);
       return { error: 'Invalid signature' };
     }
+    let signed;
+    try {
+      signed = BlindSignature.sign({
+        blinded: proof,
+        key: this.key,
+      }).toString();
+    } catch (err) {
+      consoleLog.error(`2. Could not sign proof`, proof);
+    }
 
     this.bobs[toAddress] = {
       toAddress,
@@ -357,6 +378,7 @@ class Coordinator {
     const alices = this.getAlices();
     const bobs = this.getBobs();
     if (!this.transaction && alices.length === bobs.length) {
+      // setImmediate(() => {
       const utxos = alices.reduce(
         (previous, alice) => previous.concat(alice.utxos),
         []
@@ -382,8 +404,15 @@ class Coordinator {
         utxos,
       };
       this.roundState = SERVER_STATES.signing;
+      clearTimeout(this.toutputTimeout);
+      clearTimeout(this.tsigningTimeout);
+      this.tsigningTimeout = setTimeout(
+        () => this.signingTimeout(),
+        SIGNING_TIMEOUT
+      );
+      // });
     }
-    return { ok: true };
+    return { signed };
   }
 
   gettx({ fromAddress, uuid }) {
@@ -446,6 +475,7 @@ class Coordinator {
       alices.length >= this.roundInfo.min_pool &&
       alices.length === bobs.length
     ) {
+      clearTimeout(this.tsigningTimeout);
       setImmediate(async () => {
         try {
           if (!this.DISABLE_UTXO_FETCH) {
@@ -458,7 +488,7 @@ class Coordinator {
               this.bitcoinUtils.compareUtxoSets(this.transaction.utxos, utxos);
             } catch (err) {
               consoleLog.error(`Invalid utxos`, err);
-              this.blameGame(err.data);
+              this.utxoSetChanged(err.data);
               return;
             }
           }
@@ -566,36 +596,102 @@ class Coordinator {
     }
   }
 
-  roundTimeout() {
-    // TODO: Blame game
-    consoleLog.warn('Round timed out');
-    const round_id = this.round_id;
-    this.completedRounds[round_id] = {
-      success: false,
-      error: 'Round timed out',
-      round_id,
-      date: new Date().getTime(),
-    };
-    this.initRound();
+  proof({ fromAddress, uuid, proof }) {
+    if (this.roundState !== SERVER_STATES.blamegame) {
+      return { error: 'Wrong state' };
+    }
+    if (this.bitcoinUtils.isInvalid(fromAddress)) {
+      return { error: 'Invalid address' };
+    }
+    if (!this.alices[fromAddress] || this.alices[fromAddress].uuid !== uuid) {
+      return { error: 'Not joined' };
+    }
+    if (this.alices[fromAddress].proved) {
+      return { ok: true }; // Already proved
+    }
+    try {
+      const result = BlindSignature.verify2({
+        unblinded: proof,
+        message: this.roundInfo.preverify,
+        key: this.key,
+      });
+      if (!result) throw new Error('Invalid signature');
+      // User verified
+      this.alices[fromAddress].proved = true;
+      if (this.getAlices().filter(alice => !alice.proved).length === 1) {
+        // Everyone proved except the last person who caused the timeout
+        this.outputTimeoutComplete();
+      }
+    } catch (err) {
+      consoleLog.warn(`BlameGame: Invalid proof ${proof}`);
+      return { error: 'Invalid signature' };
+    }
+    return { ok: true };
   }
 
   blindingTimeout() {
     consoleLog.warn('Blinding state timed out');
     // TODO: Just remove alices and keep going if over min?
+    const addresses = this.getAlices()
+      .filter(alice => !alice.signed)
+      .map(alice => alice.fromAddress);
+    this.punishAddresses(addresses);
+
     const round_id = this.round_id;
     this.completedRounds[round_id] = {
       success: false,
-      error: 'Blinding state timed out',
+      error: 'Timed out on Blinding state',
       round_id,
       date: new Date().getTime(),
     };
     this.initRound();
   }
+  outputsTimeout() {
+    consoleLog.warn('Output state timed out');
+    this.roundState = SERVER_STATES.blamegame;
+    clearTimeout(this.tblameTimeout);
+    this.tblameTimeout = setTimeout(
+      () => this.outputTimeoutComplete(),
+      this.BLAME_TIMEOUT
+    );
+  }
+  outputTimeoutComplete() {
+    clearTimeout(this.tblameTimeout);
+    const addresses = this.getAlices()
+      .filter(alice => !alice.proved)
+      .map(alice => alice.fromAddress);
+    this.punishAddresses(addresses);
 
-  blameGame(addresses) {
+    const round_id = this.round_id;
+    this.completedRounds[round_id] = {
+      success: false,
+      error: 'Timed out on Outputs state',
+      round_id,
+      date: new Date().getTime(),
+    };
+    this.initRound();
+  }
+  signingTimeout() {
+    consoleLog.warn('Signing state timed out');
+    const addresses = this.getAlices()
+      .filter(alice => !alice.txSigned)
+      .map(alice => alice.fromAddress);
+    this.punishAddresses(addresses);
+
+    const round_id = this.round_id;
+    this.completedRounds[round_id] = {
+      success: false,
+      error: 'Timed out on Signing state',
+      round_id,
+      date: new Date().getTime(),
+    };
+    this.initRound();
+  }
+  utxoSetChanged(addresses) {
     // A user changed their utxo set (possible double spend)
     consoleLog.warn('User changed their utxo set', addresses);
-    // TODO: Punish the users with addresses
+    this.punishAddresses(addresses);
+
     const round_id = this.round_id;
     this.completedRounds[round_id] = {
       success: false,
@@ -604,6 +700,23 @@ class Coordinator {
       date: new Date().getTime(),
     };
     this.initRound();
+  }
+  punishAddresses(addresses) {
+    const alices = this.getAlices();
+    if (addresses.length === alices.length) {
+      // Don't punish if every user failed. Probably server connection
+      consoleLog.warn(`Punishing Addresses: All users. Ignoring`);
+    } else if (addresses.length > 0) {
+      consoleLog.warn(`Punishing Addresses: ${addresses.join(', ')}`);
+      // TODO: complete
+      addresses.map(address => {
+        this.punishedAddresses[address] =
+          (this.punishedAddresses[address] || 0) + 1;
+      });
+    } else {
+      consoleLog.error(`Punishing Addresses: MISSING`);
+      // TODO: This shouldn't happen
+    }
   }
 
   async mockFetch(url, body) {
@@ -631,6 +744,8 @@ class Coordinator {
       res = await this.verify(body);
     } else if (url === '/utxo') {
       res = await this.publicUtxo(body);
+    } else if (url === '/proof') {
+      res = await this.proof(body);
     }
     res = JSON.parse(JSON.stringify(res));
     return res;
