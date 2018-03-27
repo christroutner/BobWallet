@@ -612,7 +612,7 @@ class Coordinator {
     try {
       const result = BlindSignature.verify2({
         unblinded: proof,
-        message: this.roundInfo.preverify,
+        message: uuid,
         key: this.key,
       });
       if (!result) throw new Error('Invalid signature');

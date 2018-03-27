@@ -1,6 +1,6 @@
 {
   "name": "BlindLink",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "homepage": "https://github.com/bobwallet/bobwallet/",
   "main": "./dist/client/client.js",

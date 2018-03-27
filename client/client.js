@@ -489,17 +489,10 @@ class Client {
     if (this.roundState !== CLIENT_STATES.blinding) {
       throw new Error('Wrong state');
     }
-    const {
-      unblinded,
-      toAddress,
-      outputUrl,
-      preverify,
-      N,
-      E,
-    } = this.parameters;
+    const { unblinded, toAddress, outputUrl, N, E, uuid } = this.parameters;
     console.log(`3. ${toAddress} Sending toAddress`);
     const { blinded, r } = BlindSignature.blind({
-      message: preverify,
+      message: uuid,
       N,
       E,
     });
@@ -517,7 +510,7 @@ class Client {
       unblinded: proof,
       N,
       E,
-      message: preverify,
+      message: uuid,
     });
     if (!result) throw new Error('Signature did not verify');
     this.parameters.proof = proof;
