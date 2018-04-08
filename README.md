@@ -2,13 +2,13 @@
 Note: This software is in Beta and should only be used on Testnet until thoroughly tested!
 
 ## What is Bob Wallet?
-Bob Wallet was created to help preserve Bitcoins fungibility. Today it is easy to trace Bitcoin transactions from address to address by simply using any public Block Explorer. Bob Wallet helps fix this.
+Bob Wallet was created to help preserve Bitcoin's fungibility. Today it is easy to trace Bitcoin transactions from address to address by simply using any public Block Explorer. Bob Wallet helps fix this.
 
 To start, you will create a Bob Wallet and deposit Bitcoin to your Public address. Bob Wallet will automatically move your Bitcoin from your Public to your Private Wallet. This transfer happens by joining together all other Bob Wallet users in order to create a single transaction called a CoinJoin. Your Bitcoin can not be stolen since only you own and control your wallet keys and [no one can determine your Private Wallet addresses](https://github.com/bobwallet/bobwallet/blob/master/docs/blindlink.md). Let's help keep Bitcoin fungible!
 
 ## What is Bob Wallet not?
 
-Bob Wallet is not a traditional Bitcoin wallet. You cannot use it to make a payment to someone else. It's only purpose right now is to move your Bitcoins from your Public Wallet to your Private Wallet securely without anyone knowing your Private Wallet addresses. You will have to use a separate Bitcoin wallet after your Bitcoin has been moved Private in order to spend them. Ideally, use a full-node for your Private Wallet because 3rd-party balance queries can de-anonymize you.
+Bob Wallet is not a traditional Bitcoin wallet. You cannot use it to make a payment to someone else. Its only purpose right now is to move your Bitcoins from your Public Wallet to your Private Wallet securely without anyone knowing your Private Wallet addresses. You will have to use a separate Bitcoin wallet after your Bitcoin has been made Private in order to spend them. Ideally, use a full-node for your Private Wallet because 3rd-party balance queries can de-anonymize you.
 
 ## How to get started
 1. [Download and install the Tor Browser](https://www.torproject.org/download/download-easy.html)
@@ -29,10 +29,10 @@ Which coin should we focus on first? Vote with your favorite currency!
 
 ## Advantages
 * [You don't need to trust anyone with your Bitcoin](https://github.com/bobwallet/bobwallet/blob/master/docs/blindlink.md)
-* No extra fees except for the standard Bitcoin transaction miners fee per round
+* No extra fees except for the standard Bitcoin transaction miner fee per round
 * Rounds are quick (Between 30 to 90 seconds per round)
 * Can support many participants. More users, more privacy
-* No need to download, compile or configure a complex program. It's as simple as visiting a website in your Tor Browser. This also makes it fully cross platform on ANY device that can run a Tor Browser
+* No need to download, compile, or configure a complex program. It's as simple as visiting a website in your Tor Browser. This also makes it fully cross platform on ANY device that can run a Tor Browser
 
 ## Questions
 * What is Bob Wallet?
@@ -51,7 +51,7 @@ Which coin should we focus on first? Vote with your favorite currency!
   - Tor is necessary to protect the server from determining your Private Wallet addresses. No one but you knows the addresses of your Private Wallet.
 
 
-* Are there any extra fees to us Bob Wallet?
+* Are there any extra fees to use Bob Wallet?
   - No. The only fees you pay are the standard Bitcoin miner fee for each transaction.
 
 
