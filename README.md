@@ -6,7 +6,7 @@ Bob Wallet was created to help preserve Bitcoin's fungibility. Today it is easy 
 
 To start, you will create a Bob Wallet and deposit Bitcoin to your Public address. Bob Wallet will automatically move your Bitcoin from your Public to your Private Wallet. This transfer happens by joining together all other Bob Wallet users in order to create a single transaction called a CoinJoin. Your Bitcoin can not be stolen since only you own and control your wallet keys and [no one can determine your Private Wallet addresses](https://github.com/bobwallet/bobwallet/blob/master/docs/blindlink.md). Let's help keep Bitcoin fungible!
 
-## What is Bob Wallet not?
+## What Bob Wallet is not?
 
 Bob Wallet is not a traditional Bitcoin wallet. You cannot use it to make a payment to someone else. Its only purpose right now is to move your Bitcoins from your Public Wallet to your Private Wallet securely without anyone knowing your Private Wallet addresses. You will have to use a separate Bitcoin wallet after your Bitcoin has been made Private in order to spend them. Ideally, use a full-node for your Private Wallet because 3rd-party balance queries can de-anonymize you.
 
