@@ -29,6 +29,7 @@ class Client {
 
     willPayFees = true, // TODO: Add
     MAX_FEE = 20000,
+    MIN_POOL = 2,
     minDenomination = 100000, // TODO: Add
 
     aliceSeed,
@@ -59,6 +60,7 @@ class Client {
     this.FAKE_UTXOS = FAKE_UTXOS;
     this.MAX_DELAY = MAX_DELAY;
     this.MAX_FEE = MAX_FEE;
+    this.MIN_POOL = MIN_POOL;
     this.callbackStateChange = callbackStateChange;
     this.callbackError = callbackError;
     this.callbackRoundComplete = callbackRoundComplete;
@@ -414,6 +416,7 @@ class Client {
         fromAddress,
         changeAddress,
         utxos: myUtxos,
+        min_pool: this.MIN_POOL,
         verify: this.bitcoinUtils.signMessage(preverify, fromPrivate),
       },
     });
@@ -565,6 +568,7 @@ class Client {
       denomination,
       key: fromPrivate,
       fromAddress,
+      min_pool: this.MIN_POOL,
     });
     this.parameters.txSigned = tx;
     this.parameters.alices = alices.length;

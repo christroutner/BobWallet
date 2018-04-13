@@ -24,6 +24,9 @@ const seed1 =
 const seed2 =
   'math wife smart prefer climb place parade holiday demand trophy best sword';
 
+const seed3 =
+  'cruel cram picture duck pig endless kitten ignore quantum mesh lobster enroll';
+
 const utxo1 = [
   {
     // Bitcore
@@ -75,7 +78,6 @@ test('1 User Runs Twice', async t => {
   let previousState = null;
   let rounds = 0;
   const coordinator = new Coordinator({
-    AUTO_START_ROUNDS: false,
     DISABLE_BROADCAST: true,
     DISABLE_UTXO_FETCH: true,
     MIN_POOL: 1,
@@ -89,6 +91,7 @@ test('1 User Runs Twice', async t => {
     aliceSeed: seed1,
     bobSeed: seed1,
     FAKE_UTXOS: utxo1,
+    MIN_POOL: 1,
     callbackStateChange: state => {
       t.equal(state, ++previousState % clientNum);
     },
@@ -134,6 +137,7 @@ test('1 User Runs Twice', async t => {
   await client.join();
   t.equal(client.roundState, CLIENT_STATES.joined);
   t.equal(coordinator.roundState, SERVER_STATES.join);
+  coordinator.forceStart();
   await client.blind();
   t.equal(coordinator.roundState, SERVER_STATES.outputs);
   await client.refreshState();
@@ -156,6 +160,7 @@ test('1 User Runs Twice', async t => {
   await client.join();
   t.equal(client.roundState, CLIENT_STATES.joined);
   t.equal(coordinator.roundState, SERVER_STATES.join);
+  coordinator.forceStart();
   await client.blind();
   t.equal(coordinator.roundState, SERVER_STATES.outputs);
   await client.refreshState();
@@ -177,7 +182,6 @@ test('1 User Runs Twice', async t => {
 test('2 Users Run', async t => {
   t.plan(36);
   const coordinator = new Coordinator({
-    AUTO_START_ROUNDS: false,
     DISABLE_BROADCAST: true,
     DISABLE_UTXO_FETCH: true,
     bitcoinUtils,
@@ -251,6 +255,7 @@ test('2 Users Run', async t => {
   t.equal(coordinator.roundState, SERVER_STATES.join);
   await client2.join();
   t.equal(coordinator.roundState, SERVER_STATES.join);
+  coordinator.forceStart();
   await client1.blind();
   t.equal(coordinator.roundState, SERVER_STATES.blinding);
   await client2.blind();
@@ -285,7 +290,6 @@ test(`3 Run ${NUM_OF_RUNS} Users`, async t => {
   t.plan(NUM_OF_RUNS * 13 + 5);
 
   const coordinator = new Coordinator({
-    AUTO_START_ROUNDS: false,
     DISABLE_BROADCAST: true,
     DISABLE_UTXO_FETCH: true,
     bitcoinUtils,
@@ -334,6 +338,7 @@ test(`3 Run ${NUM_OF_RUNS} Users`, async t => {
   }
   t.equal(coordinator.roundState, SERVER_STATES.join);
   t.equal(coordinator.getAlices().length, NUM_OF_RUNS);
+  coordinator.forceStart();
 
   for (let i = 0; i < clients.length; i++) {
     const client = clients[i];
@@ -369,7 +374,6 @@ test('4 User Joins and Unjoins', async t => {
   // t.plan(8);
 
   const coordinator = new Coordinator({
-    AUTO_START_ROUNDS: false,
     DISABLE_BROADCAST: true,
     DISABLE_UTXO_FETCH: true,
     MIN_POOL: 2,
@@ -422,7 +426,6 @@ test('5 User Autojoins', async t => {
   t.plan(ROUNDS * 16 + 7);
 
   const coordinator = new Coordinator({
-    AUTO_START_ROUNDS: false,
     DISABLE_BROADCAST: true,
     DISABLE_UTXO_FETCH: true,
     MIN_POOL: 1,
@@ -430,6 +433,7 @@ test('5 User Autojoins', async t => {
   });
   const client = new Client({
     MAX_DELAY: 0,
+    MIN_POOL: 1,
     DISABLE_UTXO_FETCH: true,
     bitcoinUtils,
     mockFetch: (url, params) => coordinator.mockFetch(url, params),
@@ -456,6 +460,7 @@ test('5 User Autojoins', async t => {
     await client.refreshState();
     t.equal(coordinator.roundState, SERVER_STATES.join);
     t.equal(client.roundState, CLIENT_STATES.joined);
+    coordinator.forceStart();
     await client.blind();
     t.equal(coordinator.roundState, SERVER_STATES.outputs);
     t.equal(client.roundState, CLIENT_STATES.blind);
@@ -500,7 +505,6 @@ test('5 User Autojoins', async t => {
 
 test('6 Failed autojoin', async t => {
   const coordinator = new Coordinator({
-    AUTO_START_ROUNDS: false,
     DISABLE_BROADCAST: true,
     DISABLE_UTXO_FETCH: true,
     MIN_POOL: 1,
@@ -509,6 +513,7 @@ test('6 Failed autojoin', async t => {
   });
   const client = new Client({
     MAX_DELAY: 0,
+    MIN_POOL: 1,
     DISABLE_UTXO_FETCH: true,
     bitcoinUtils,
     mockFetch: (url, params) => coordinator.mockFetch(url, params),
@@ -540,7 +545,6 @@ test('7 Test Max Fees', async t => {
   t.plan(4);
 
   const coordinator1 = new Coordinator({
-    AUTO_START_ROUNDS: false,
     DISABLE_BROADCAST: true,
     DISABLE_UTXO_FETCH: true,
     FEE_PER_USER: 1000,
@@ -561,7 +565,6 @@ test('7 Test Max Fees', async t => {
   t.equal(client1.roundState, CLIENT_STATES.joined);
 
   const coordinator2 = new Coordinator({
-    AUTO_START_ROUNDS: false,
     DISABLE_BROADCAST: true,
     DISABLE_UTXO_FETCH: true,
     FEE_PER_INPUT: 1001,
@@ -597,7 +600,6 @@ test('8 Test Blame Game', async t => {
   t.plan(4);
 
   const coordinator = new Coordinator({
-    AUTO_START_ROUNDS: false,
     DISABLE_BROADCAST: true,
     DISABLE_UTXO_FETCH: true,
     OUTPUTS_TIMEOUT: 50, // Speed up timeout
@@ -626,13 +628,15 @@ test('8 Test Blame Game', async t => {
   await client2.refreshState();
   await client1.join();
   await client2.join();
+  coordinator.forceStart();
   await client1.blind();
   await client2.blind();
+  await client2.disconnect();
   await client1.refreshState();
   t.equal(SERVER_STATES.outputs, coordinator.roundState);
   while (coordinator.roundState === SERVER_STATES.outputs) {
     // Wait until timeout
-    await coordinator.wait(10);
+    await coordinator.wait(1);
   }
   t.equal(coordinator.roundState, SERVER_STATES.blamegame);
   await client1.refreshState();
@@ -640,7 +644,6 @@ test('8 Test Blame Game', async t => {
     await coordinator.wait(10);
   }
   await client1.refreshState();
-  await client2.refreshState();
   t.equal(Object.keys(coordinator.punishedAddresses).length, 1);
   t.equal(
     coordinator.punishedAddresses['mrhMGkaxELdoYRSKC2f2MVfs6qpUxHYYcR'],
@@ -648,7 +651,110 @@ test('8 Test Blame Game', async t => {
   );
 
   await client1.disconnect();
+
+  coordinator.exit();
+  t.end();
+});
+
+test('9 Test min_pool', async t => {
+  t.plan(2);
+
+  const coordinator = new Coordinator({
+    DISABLE_BROADCAST: true,
+    DISABLE_UTXO_FETCH: true,
+    OUTPUTS_TIMEOUT: 50, // Speed up timeout
+    BLAME_TIMEOUT: 10,
+    bitcoinUtils,
+    MIN_POOL: 1,
+  });
+  const client1 = new Client({
+    bitcoinUtils,
+    mockFetch: (url, params) => coordinator.mockFetch(url, params),
+    aliceSeed: seed1,
+    bobSeed: seed1,
+    FAKE_UTXOS: utxo1,
+    MAX_DELAY: 0,
+    MIN_POOL: 1,
+  });
+  await client1.connect();
+  await client1.refreshState();
+  await client1.join();
+  coordinator.forceStart();
+  client1.MIN_POOL = 2; // Change min_pool
+  t.equal(coordinator.state().alices, 1);
+  await client1.blind();
+  await client1.refreshState();
+  try {
+    await client1.getTx();
+  } catch (err) {
+    t.equal(err.message, 'Not enough alices in the round');
+  }
+
+  await client1.disconnect();
+  coordinator.exit();
+  t.end();
+});
+
+test('10 Test min_pool server removal', async t => {
+  t.plan(2);
+
+  const coordinator = new Coordinator({
+    DISABLE_BROADCAST: true,
+    DISABLE_UTXO_FETCH: true,
+    // OUTPUTS_TIMEOUT: 50,
+    // BLAME_TIMEOUT: 10,
+    bitcoinUtils,
+    MIN_POOL: 2,
+  });
+  const client1 = new Client({
+    bitcoinUtils,
+    mockFetch: (url, params) => coordinator.mockFetch(url, params),
+    aliceSeed: seed1,
+    bobSeed: seed1,
+    FAKE_UTXOS: utxo1,
+    MAX_DELAY: 0,
+    MIN_POOL: 1,
+  });
+  await client1.connect();
+  await client1.refreshState();
+  await client1.join();
+  const client2 = new Client({
+    bitcoinUtils,
+    mockFetch: (url, params) => coordinator.mockFetch(url, params),
+    aliceSeed: seed2,
+    bobSeed: seed2,
+    FAKE_UTXOS: utxo2,
+    MAX_DELAY: 0,
+    MIN_POOL: 2,
+  });
+  await client2.connect();
+  await client2.refreshState();
+  await client2.join();
+  const utxo3 = bitcoinUtils.getFakeUtxos({
+    address: 'mhtdy5akwJNoRAyZKbgkkLnKauTyVJBPoU',
+    txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
+    vout: 1,
+    satoshis: 124000000,
+  });
+  const client3 = new Client({
+    bitcoinUtils,
+    mockFetch: (url, params) => coordinator.mockFetch(url, params),
+    aliceSeed: seed3,
+    bobSeed: seed3,
+    FAKE_UTXOS: utxo3,
+    MAX_DELAY: 0,
+    MIN_POOL: 4,
+  });
+  await client3.connect();
+  await client3.refreshState();
+  await client3.join();
+  t.equal(coordinator.state().alices, 3);
+  coordinator.forceStart();
+  t.equal(coordinator.state().alices, 2);
+
+  await client1.disconnect();
   await client2.disconnect();
+  await client3.disconnect();
   coordinator.exit();
   t.end();
 });

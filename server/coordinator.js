@@ -13,7 +13,7 @@ const CHECKIN_TIMEOUT = 30 * 1000; // Assume user is out if they haven't checked
 const CHECK_FOR_TIMEOUTS = 3 * 1000; // Every 3 seconds check if alice timed out
 const BLINDING_TIMEOUT = 30 * 1000;
 const dOUTPUTS_TIMEOUT = 30 * 1000;
-const SIGNING_TIMEOUT = 30 * 1000;
+const dSIGNING_TIMEOUT = 30 * 1000;
 const dBLAME_TIMEOUT = 30 * 1000;
 const MAX_ROUND_HISTORY = 30;
 const AUTO_START_DELAY = 10 * 1000;
@@ -37,12 +37,12 @@ class Coordinator {
     MAX_POOL = 1000,
     OUTPUT_SAT = 100000,
     FEE_PER_INPUT = 1000,
-    AUTO_START_ROUNDS = true,
     RSA_KEY_SIZE = 1024,
     OUTPUT_URL,
     LOG_TO_FILE = false,
     OUTPUTS_TIMEOUT = dOUTPUTS_TIMEOUT,
     BLAME_TIMEOUT = dBLAME_TIMEOUT,
+    SIGNING_TIMEOUT = dSIGNING_TIMEOUT,
   }) {
     if (LOG_TO_FILE) {
       consoleLog = require('simple-node-logger').createSimpleLogger({
@@ -62,10 +62,10 @@ class Coordinator {
     this.MAX_POOL = MAX_POOL;
     this.OUTPUT_SAT = OUTPUT_SAT;
     this.FEE_PER_INPUT = FEE_PER_INPUT;
-    this.AUTO_START_ROUNDS = !!AUTO_START_ROUNDS;
     this.RSA_KEY_SIZE = RSA_KEY_SIZE;
     this.OUTPUTS_TIMEOUT = OUTPUTS_TIMEOUT;
     this.BLAME_TIMEOUT = BLAME_TIMEOUT;
+    this.SIGNING_TIMEOUT = SIGNING_TIMEOUT;
     this.punishedAddresses = {}; // TODO: Persist
     this.initRound();
   }
@@ -76,6 +76,7 @@ class Coordinator {
     return Object.keys(this.bobs).map(key => this.bobs[key]);
   }
   exit() {
+    this.initRound();
     clearTimeout(this.tcheck);
   }
 
@@ -98,7 +99,6 @@ class Coordinator {
       denomination: this.OUTPUT_SAT,
       version: SERVER_VERSION,
       preverify: uuidv4(),
-      autostart: this.AUTO_START_ROUNDS,
       url: this.OUTPUT_URL,
     };
     this.round_id = uuidv4();
@@ -178,7 +178,7 @@ class Coordinator {
     return { ok: true };
   }
 
-  async join({ utxos, fromAddress, changeAddress, verify }) {
+  async join({ utxos, fromAddress, changeAddress, verify, min_pool }) {
     if (
       this.bitcoinUtils.isInvalid(fromAddress) ||
       this.bitcoinUtils.isInvalid(changeAddress)
@@ -254,43 +254,71 @@ class Coordinator {
       joinDate: new Date().getTime(),
       checkinDate: new Date().getTime(),
       joinResponse,
+      min_pool,
     };
+    const minPoolRound = this.roundInfo.min_pool;
 
-    const numAlices = this.getAlices().length;
+    const alices = this.getAlices();
+    const numAlices = alices.length;
+    const minPoolAlices = alices.filter(alice => alice.min_pool >= minPoolRound)
+      .length;
     consoleLog.info(
       `1: #${numAlices} Participant joined ${fromAddress} with ${balance} SAT and ${
         utxos.length
       } inputs`
     );
-    if (
-      !this.tautoStartRounds &&
-      numAlices >= this.MIN_POOL &&
-      this.AUTO_START_ROUNDS
-    ) {
+    if (!this.tautoStartRounds && minPoolAlices >= minPoolRound) {
       consoleLog.info(
         `Met Minimum Alices. Auto Starting Round in ${AUTO_START_DELAY /
           1000} seconds...`
       );
       clearTimeout(this.tautoStartRounds);
-      this.tautoStartRounds = setTimeout(() => {
-        clearTimeout(this.tautoStartRounds);
-        this.tautoStartRounds = null;
-        if (
-          this.getAlices().length >= this.MIN_POOL &&
-          this.roundState === SERVER_STATES.join
-        ) {
-          this.roundState = SERVER_STATES.blinding;
-          clearTimeout(this.tblindingTimeout);
-          this.tblindingTimeout = setTimeout(
-            () => this.blindingTimeout(),
-            BLINDING_TIMEOUT
-          );
-        } else {
-          consoleLog.info('Not enough alices to start round');
-        }
-      }, AUTO_START_DELAY);
+      this.tautoStartRounds = setTimeout(
+        () => this.forceStart(),
+        AUTO_START_DELAY
+      );
     }
     return joinResponse;
+  }
+
+  forceStart() {
+    if (this.roundState !== SERVER_STATES.join) {
+      consoleLog.warn(`Invalid state for forceStart(). ${this.roundState}`);
+      return;
+    }
+    clearTimeout(this.tautoStartRounds);
+    this.tautoStartRounds = null;
+    const alices = this.getAlices();
+    const alicesFitMinPool = alices.filter(
+      alice => !alice.min_pool || alice.min_pool <= alices.length
+    );
+    if (alicesFitMinPool.length < this.roundInfo.min_pool) {
+      consoleLog.info(
+        `Not enough alices to start round. ${alicesFitMinPool.length} need ${
+          this.roundInfo.min_pool
+        }`
+      );
+      return;
+    }
+    if (alicesFitMinPool.length !== alices.length) {
+      const alicesRemoved = alices.filter(
+        alice => alice.min_pool > alices.length
+      );
+      alicesRemoved.map(alice => {
+        consoleLog.info(
+          `Removing alice ${alice.fromAddress}. Their min_pool ${
+            alice.min_pool
+          } is higher than ${this.roundInfo.min_pool}`
+        );
+        delete this.alices[alice.fromAddress];
+      });
+    }
+    this.roundState = SERVER_STATES.blinding;
+    clearTimeout(this.tblindingTimeout);
+    this.tblindingTimeout = setTimeout(
+      () => this.blindingTimeout(),
+      BLINDING_TIMEOUT
+    );
   }
 
   blinding({ fromAddress, uuid, toAddressBlinded }) {
@@ -299,18 +327,6 @@ class Coordinator {
     }
     if (!this.alices[fromAddress] || this.alices[fromAddress].uuid !== uuid) {
       return { error: 'You have not joined' };
-    }
-    if (
-      !this.AUTO_START_ROUNDS &&
-      this.roundState === SERVER_STATES.join &&
-      this.getAlices().length >= this.roundInfo.min_pool
-    ) {
-      this.roundState = SERVER_STATES.blinding;
-      clearTimeout(this.tblindingTimeout);
-      this.tblindingTimeout = setTimeout(
-        () => this.blindingTimeout(),
-        BLINDING_TIMEOUT
-      );
     }
     if (this.roundState !== SERVER_STATES.blinding) {
       return { error: 'Wrong state' };
@@ -383,14 +399,14 @@ class Coordinator {
         (previous, alice) => previous.concat(alice.utxos),
         []
       );
-      const fees = this.roundInfo.fees;
-      const denomination = this.roundInfo.denomination;
+      const { fees, min_pool, denomination } = this.roundInfo;
       const { tx } = this.bitcoinUtils.createTransaction({
         utxos,
         alices,
         bobs,
         fees,
         denomination,
+        min_pool,
       });
       this.finalTransaction = tx;
       this.transaction = {
@@ -408,7 +424,7 @@ class Coordinator {
       clearTimeout(this.tsigningTimeout);
       this.tsigningTimeout = setTimeout(
         () => this.signingTimeout(),
-        SIGNING_TIMEOUT
+        this.SIGNING_TIMEOUT
       );
       // });
     }

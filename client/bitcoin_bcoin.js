@@ -433,12 +433,16 @@ class Bitcoin {
     denomination,
     key,
     fromAddress,
+    min_pool,
   }) {
     console.log('Constructing TX...');
 
     // Sanity check
     if (alices.length !== bobs.length) {
       throw new Error('Invalid number of inputs to outputs');
+    }
+    if (min_pool && alices.length < min_pool) {
+      throw new Error('Not enough alices in the round');
     }
     // Validate addresses
     alices.map(alice => {
