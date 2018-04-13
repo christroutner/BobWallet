@@ -260,13 +260,14 @@ class Coordinator {
 
     const alices = this.getAlices();
     const numAlices = alices.length;
-    const minPoolAlices = alices.filter(alice => alice.min_pool >= minPoolRound)
-      .length;
     consoleLog.info(
       `1: #${numAlices} Participant joined ${fromAddress} with ${balance} SAT and ${
         utxos.length
-      } inputs`
+      } inputs. min_pool: ${min_pool}`
     );
+    const minPoolAlices = alices.filter(
+      alice => !alice.min_pool || alice.min_pool <= alices.length
+    ).length;
     if (!this.tautoStartRounds && minPoolAlices >= minPoolRound) {
       consoleLog.info(
         `Met Minimum Alices. Auto Starting Round in ${AUTO_START_DELAY /
