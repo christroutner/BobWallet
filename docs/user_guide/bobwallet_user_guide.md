@@ -49,7 +49,7 @@ Bob Wallet must be kept open for the mixing process to happen. If you disconnect
 
 ## Optional: Change Bob Wallet Settings
 
-There is a Settings tab where you can change Bob Wallet settings.
+There is a Settings tab where you can change Bob Wallet settings, download a backup file, reset and start with a new wallet, and show your wallet seeds. If you try to reset the wallet, Bob Wallet will automatically show a pop up to download a wallet backup file in case you don't have a backup saved yet.
 
 ![](8_bobsettingseasy.png)
 
@@ -57,7 +57,7 @@ In the Settings tab you can change the denomination shown in your Bob Wallet fro
 
 ![](10_bobsats.png)
 
-You can also enable Pro mode to see what is going on behind the scenes in Bob Wallet.
+You can also enable Pro mode to see what is going on behind the scenes in Bob Wallet and change advanced settings.
 
 ![](9_bobprojoin.png)
 
