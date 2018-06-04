@@ -1,6 +1,7 @@
 import { observe } from 'mobx';
 import store from '../store';
 import ActionsClient from './client';
+import ActionsSettings from './settings';
 
 class ActionsNav {
   constructor() {
@@ -15,6 +16,23 @@ class ActionsNav {
     });
   }
 
+  goEasy() {
+    const aliceSeed = ActionsClient.newMnemonic();
+    const bobSeed = ActionsClient.newMnemonic();
+    ActionsSettings.setSimpleMode(true);
+    ActionsSettings.downloadBackup({ aliceSeed, bobSeed });
+    ActionsSettings.copyBackup({ aliceSeed, bobSeed });
+    ActionsClient.initAlice({ aliceSeed, bobSeed });
+    this.goHome();
+  }
+  goPro({ aliceSeed, bobSeed }) {
+    ActionsSettings.setSimpleMode(false);
+    ActionsSettings.downloadBackup({ aliceSeed, bobSeed });
+    ActionsSettings.copyBackup({ aliceSeed, bobSeed });
+    ActionsClient.initAlice({ aliceSeed, bobSeed });
+    this.goHome();
+    this.goJoin();
+  }
   goWelcome() {
     ActionsClient.clearAlice();
     store.route = 'Welcome';

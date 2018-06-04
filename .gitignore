@@ -1,7 +1,8 @@
 .DS_Store
 /other
 node_modules
-/dist
+/blindlink/dist
+/shufflelink/dist
 /hostname1
 /hostname2
 yarn.lock

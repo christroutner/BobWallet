@@ -11,7 +11,7 @@ const fs = require('fs');
 const simplelogger = require('simple-node-logger');
 
 const LOG = false;
-const INDEX_FILE = '../bobwallet.html';
+const INDEX_FILE = '../../bobwallet.html';
 const ADDRESS = '127.0.0.1';
 const PORT = 8081;
 const PORT2 = 8082;
@@ -31,7 +31,7 @@ let CONFIG = {
   OUTPUT_SAT: 100000,
 };
 try {
-  CONFIG = require('../config.json');
+  CONFIG = require('../../config.json');
   console.log('Using config file config.json');
 } catch (err) {
   console.log('Could not find config.json. Using defaults');
@@ -64,7 +64,7 @@ let consoleLog = {
 };
 if (LOG_TO_FILE) {
   consoleLog = simplelogger.createSimpleLogger({
-    logFilePath: path.join(__dirname, '../logs/server.log'),
+    logFilePath: path.join(__dirname, '../../logs/server.log'),
     timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
   });
 }
@@ -85,7 +85,7 @@ const bitcoinUtils = new Bitcoin({
 
 let OUTPUT_URL;
 try {
-  OUTPUT_URL = fs.readFileSync(path.join(__dirname, '../hostname2'), 'utf8');
+  OUTPUT_URL = fs.readFileSync(path.join(__dirname, '../../hostname2'), 'utf8');
   OUTPUT_URL = normalizeUrl(OUTPUT_URL);
 } catch (err) {
   OUTPUT_URL =
@@ -94,7 +94,7 @@ try {
 
 let MAIN_URL;
 try {
-  MAIN_URL = fs.readFileSync(path.join(__dirname, '../hostname1'), 'utf8');
+  MAIN_URL = fs.readFileSync(path.join(__dirname, '../../hostname1'), 'utf8');
   MAIN_URL = normalizeUrl(MAIN_URL);
 } catch (err) {
   // Ignore

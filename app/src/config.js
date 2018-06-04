@@ -14,7 +14,8 @@ export const DEFAULT_ROUTE = 'Home';
 export const DEFAULT_TAB = 'AliceSimple';
 
 // export const SERVER = 'http://localhost:8081';
-export const SERVER = 'http://bobwalletktuy6hp.onion';
+// export const SERVER = 'http://bobwalletktuy6hp.onion';
+export const SERVER = 'https://api.bobwallet.fun';
 
 export const WALLET_TOOL_URL = 'https://iancoleman.io/bip39/';
 export const TOR_URL = 'https://www.torproject.org/download/download-easy.html';

@@ -8,24 +8,20 @@ import store from '../store';
 
 class ComponentConnected extends Component {
   render() {
-    const {
-      computedIsConnected,
-      computedIsConnecting,
-      computedIsDisconnected,
-    } = store;
+    const { roundInfo } = store;
     return (
       <View
         style={{
-          backgroundColor: computedIsConnected ? colors.green : colors.red,
+          backgroundColor: roundInfo.isConnected ? colors.green : colors.red,
           height: 30,
           alignItems: 'center',
           justifyContent: 'center',
           flexDirection: 'row',
         }}
       >
-        {computedIsConnected && <Text>Connected</Text>}
-        {computedIsConnecting && <Text>Connecting...</Text>}
-        {computedIsConnecting && (
+        {roundInfo.isConnected && <Text>Connected</Text>}
+        {roundInfo.isConnecting && <Text>Connecting...</Text>}
+        {roundInfo.isConnecting && (
           <Spinner
             style={{
               marginLeft: 6,
@@ -37,7 +33,7 @@ class ComponentConnected extends Component {
             small={true}
           />
         )}
-        {computedIsDisconnected && <Text>Disconnected</Text>}
+        {roundInfo.isDisconnected === true && <Text>Disconnected</Text>}
       </View>
     );
   }

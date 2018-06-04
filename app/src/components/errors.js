@@ -7,16 +7,15 @@ import store from '../store';
 
 class ComponentErrors extends Component {
   render() {
-    const { computedServerError, computedRoundError } = store;
+    const { roundInfo } = store;
     return (
       <View>
-        {!!computedServerError && (
-          <TextB style={{ alignSelf: 'center', color: colors.red }}>
-            Error: {computedServerError.message}
-          </TextB>
-        )}
-        <TextB style={{ alignSelf: 'center', color: colors.red }}>
-          {computedRoundError ? `Error: ${computedRoundError.message}` : ' '}
+        <TextB
+          style={{ alignSelf: 'center', color: colors.red, marginBottom: 4 }}
+        >
+          {roundInfo && roundInfo.roundError
+            ? `${roundInfo.roundError.error}`
+            : ' '}
         </TextB>
       </View>
     );

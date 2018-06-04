@@ -1,17 +1,10 @@
 const test = require('tape');
-
-const { USE_BITCORE } = require('./config');
-
 const bcoin = require('bcoin');
 
-const BitcoinBitcore = require('../dist/client/bitcoin_bitcore');
-const BitcoinBcoin = require('../dist/client/bitcoin_bcoin').default;
+const BitcoinBcoin = require('../dist/shufflelink/client/bitcoin_bcoin')
+  .default;
 let bitcoinUtils;
-if (USE_BITCORE) {
-  bitcoinUtils = new BitcoinBitcore('testnet');
-} else {
-  bitcoinUtils = new BitcoinBcoin({ CHAIN: 'testnet', bcoin });
-}
+bitcoinUtils = new BitcoinBcoin({ CHAIN: 'testnet', bcoin });
 
 const seed1 =
   'price shy bulb dutch fiber coral chunk burden noodle uniform endorse pyramid';

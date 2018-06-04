@@ -64,9 +64,9 @@ class ActionsSettings {
         }
       }
       store.save();
-      store.completedRounds = observable(completedRounds || []);
+      store.completedRounds = observable.array(completedRounds || []);
       store.saveCompletedRounds();
-      store.addressBalances = addressBalances || {};
+      store.addressBalances.replace(addressBalances || {});
       store.saveAddressBalances();
     } catch (err) {
       console.log('Error recovering backup', err);
@@ -74,14 +74,15 @@ class ActionsSettings {
     }
   }
   toggleSimpleMode() {
-    store.settings.simpleMode = !store.settings.simpleMode;
-    store.save();
-    if (store.settings.simpleMode && store.blindlinkClient) {
+    this.setSimpleMode(!store.settings.simpleMode);
+  }
+  setSimpleMode(value) {
+    store.settings.simpleMode = !!value;
+    if (value) {
       store.settings.wholeNumbers = true;
-      store.blindlinkClient.connect();
-    } else {
-      // store.blindlinkClient.setAutoJoin(0); // Stop?
+      store.bobClient && store.bobClient.connect();
     }
+    store.save();
   }
 }
 

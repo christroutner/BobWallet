@@ -106,7 +106,7 @@ class BobSimple extends Component {
                       // title="Bob Address"
                       address={to}
                       // privateKey={toPrivateWIF}
-                      balance={addressBalances[to]}
+                      balance={addressBalances.get(to)}
                       ticker={ticker}
                       wholeNumbers={wholeNumbers}
                       disableIncrementor={true}

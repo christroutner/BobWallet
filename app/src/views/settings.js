@@ -58,7 +58,7 @@ class Settings extends Component {
           />
           {!simpleMode && (
             <Button
-              text={wholeNumbers ? 'Show Satoshis' : 'Show Bitcoin'}
+              text={wholeNumbers ? 'Show in Satoshis' : 'Show in Bitcoin'}
               color={colors.darkgray}
               onPress={() => ActionsSettings.flipWholeNumber()}
             />
@@ -86,8 +86,8 @@ class Settings extends Component {
             text="Download Backup"
             color={colors.darkgray}
             onPress={() => {
-              ActionsSettings.downloadBackup();
               ActionsSettings.copyBackup();
+              ActionsSettings.downloadBackup();
               this.flash('Copied Backup to Clipboard.');
             }}
           />
@@ -100,11 +100,11 @@ class Settings extends Component {
             }
             onPress={() => {
               if (deleteWallet) {
-                ActionsNav.goWelcome();
-              } else {
                 ActionsSettings.copyBackup();
                 ActionsSettings.downloadBackup();
+                ActionsNav.goWelcome();
                 this.flash('Copied Backup to Clipboard.');
+              } else {
                 this.setState({ deleteWallet: true });
               }
             }}

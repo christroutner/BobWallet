@@ -2,11 +2,15 @@ import store from '../store';
 import { observe, action } from 'mobx';
 import { DEFAULT_ROUTE, DEFAULT_TAB, DEFAULT_CHAIN } from '../config';
 
-import Client from '../blindlink/client';
-import Bitcoin from '../blindlink/bitcoin_bcoin';
+// import Client from '../blindlink/client';
+// import Bitcoin from '../blindlink/bitcoin_bcoin';
+// import bcoin from 'bcoin';
+import Client from '../shufflelink/network';
+import Bitcoin from '../shufflelink/bitcoin_bcoin';
 const bitcoinUtils = new Bitcoin({
   CHAIN: DEFAULT_CHAIN,
   bcoin: window.bcoin,
+  // bcoin,
 });
 
 // const Client = require('electron-rpc/client');
@@ -15,34 +19,40 @@ const bitcoinUtils = new Bitcoin({
 class ActionsClient {
   constructor() {
     observe(store, 'loaded', () => {
-      const { settings: { aliceSeed, bobSeed } } = store;
+      const {
+        settings: { aliceSeed, bobSeed },
+      } = store;
       if (aliceSeed && bobSeed) {
         this.initAlice({});
       }
     });
 
     setInterval(() => this.getRoundInfo(), 1000);
-    this.autoJoin();
+    // this.autoJoin();
   }
   clearAlice() {
     this.disconnect();
-    store.blindlinkClient = null;
+    store.bobClient = null;
     store.route = DEFAULT_ROUTE;
     store.routeTab = DEFAULT_TAB;
     store.clear();
     this.refreshAddresses();
   }
 
-  autoJoin() {
-    clearTimeout(this.tautoJoin);
-    const { blindlinkClient, settings: { simpleMode } } = store;
-    if (blindlinkClient && simpleMode) {
-      store.blindlinkClient.setAutoJoin(9999);
-    }
-    this.tautoJoin = setTimeout(() => {
-      this.autoJoin();
-    }, 3000);
-  }
+  // autoJoin() {
+  //   clearTimeout(this.tautoJoin);
+  //   const {
+  //     bobClient,
+  //     settings: { simpleMode },
+  //   } = store;
+  //   if (bobClient && simpleMode) {
+  //     // store.bobClient.setAutoJoin(9999);
+  //     store.bobClient.connect();
+  //   }
+  //   this.tautoJoin = setTimeout(() => {
+  //     this.autoJoin();
+  //   }, 3000);
+  // }
 
   initAlice({
     aliceSeed = store.settings.aliceSeed,
@@ -51,11 +61,13 @@ class ActionsClient {
     bobIndex = store.settings.bobIndex,
     changeIndex = store.settings.changeIndex,
   }) {
-    const { settings: { serverAddress } } = store;
+    const {
+      settings: { serverAddress, simpleMode },
+    } = store;
 
-    store.blindlinkClient = new Client({
+    store.bobClient = new Client({
       CHAIN: DEFAULT_CHAIN,
-      DISABLE_UTXO_FETCH: true,
+      // DISABLE_UTXO_FETCH: true,
       bitcoinUtils,
       aliceSeed,
       bobSeed,
@@ -64,12 +76,25 @@ class ActionsClient {
       changeIndex,
       serverAddress,
       callbackBalance: res => {
-        store.addressBalances[res.address] = res.balance;
-        store.saveAddressBalances();
+        try {
+          const { address, balance, needed, error } = res;
+          if (error) throw new Error(error);
+          store.addressBalances.set(address, balance);
+          // if (needed && address === store.roundAddresses.fromAddress) {
+          //   store.neededFunds = needed;
+          // }
+          if (needed) {
+            store.neededFunds = needed;
+          }
+          store.saveAddressBalances();
+        } catch (err) {
+          console.log('ERROR', err);
+        }
       },
       callbackStateChange: () => this.getRoundInfo(),
       callbackError: () => this.getRoundInfo(),
       callbackRoundComplete: action(tx => {
+        // console.log('Completed round', tx);
         const {
           error,
           to,
@@ -84,7 +109,7 @@ class ActionsClient {
           date,
         } = tx;
         const {
-          blindlinkClient: { aliceIndex, bobIndex, changeIndex },
+          bobClient: { aliceIndex, bobIndex, changeIndex },
           settings: {
             successfulRounds,
             failedRounds,
@@ -99,10 +124,13 @@ class ActionsClient {
         if (tx && !tx.error) {
           // Update balances on our estimates
           const { addressBalances } = store;
-          const toAmount = (addressBalances[to] || 0) + out;
-          store.addressBalances[from] = 0; // Sent balance
-          store.addressBalances[change] = (addressBalances[change] || 0) + left;
-          store.addressBalances[to] = toAmount;
+          const toAmount = (addressBalances.get(to) || 0) + out;
+          store.addressBalances.set(from, 0); // Sent balance
+          store.addressBalances.set(
+            change,
+            (addressBalances.get(change) || 0) + left
+          );
+          store.addressBalances.set(to, toAmount);
           store.saveAddressBalances();
 
           store.settings.successfulRounds = successfulRounds + 1;
@@ -134,44 +162,24 @@ class ActionsClient {
         });
         store.saveCompletedRounds();
       }),
-      // disableTor: true,
-      // torFetch: (url, params) => {
-      //   return new Promise((resolve, reject) => {
-      //     client.request('tor', { url, params }, (err, body) => {
-      //       if (err) {
-      //         reject(err);
-      //       } else {
-      //         resolve(body);
-      //       }
-      //     });
-      //   });
-      // },
-      // newTorSession: () => {
-      //   return new Promise((resolve, reject) => {
-      //     client.request('newTorSession', err => {
-      //       if (err) {
-      //         reject(err);
-      //       } else {
-      //         resolve();
-      //       }
-      //     });
-      //   });
-      // },
     });
-    store.settings.aliceSeed = store.blindlinkClient.aliceSeed;
-    store.settings.bobSeed = store.blindlinkClient.bobSeed;
-    store.settings.aliceIndex = store.blindlinkClient.aliceIndex;
-    store.settings.bobIndex = store.blindlinkClient.bobIndex;
-    store.settings.changeIndex = store.blindlinkClient.changeIndex;
+    store.settings.aliceSeed = store.bobClient.aliceSeed;
+    store.settings.bobSeed = store.bobClient.bobSeed;
+    store.settings.aliceIndex = store.bobClient.aliceIndex;
+    store.settings.bobIndex = store.bobClient.bobIndex;
+    store.settings.changeIndex = store.bobClient.changeIndex;
     store.save();
     this.refreshAddresses();
+    this.getRoundInfo();
 
-    store.blindlinkClient.connect();
+    if (simpleMode) {
+      store.bobClient.connect();
+    }
   }
   refreshAddresses() {
-    const { blindlinkClient } = store;
-    if (blindlinkClient) {
-      store.roundAddresses = blindlinkClient.getAddresses();
+    const { bobClient } = store;
+    if (bobClient) {
+      store.roundAddresses = bobClient.getAddresses();
     } else {
       return {};
     }
@@ -185,17 +193,17 @@ class ActionsClient {
     // store.settings.serverAddress = address.replace(/(http:\/\/.*)\//i, '$1');
     store.settings.serverAddress = address;
     store.save();
-    if (store.blindlinkClient) {
-      store.blindlinkClient.setServer(address);
+    if (store.bobClient) {
+      store.bobClient.setServer(address);
     }
   }
-  join(value) {
-    store.blindlinkClient.setAutoJoin(value);
-    if (value === 0) {
-      store.blindlinkClient.unjoin();
-    }
-    this.getRoundInfo();
-  }
+  // join(value) {
+  //   // store.bobClient.setAutoJoin(value);
+  //   // if (value === 0) {
+  //   //   store.bobClient.unjoin();
+  //   // }
+  //   // this.getRoundInfo();
+  // }
   isValidSeed(seed) {
     return bitcoinUtils.isMnemonicValid(seed);
   }
@@ -213,40 +221,43 @@ class ActionsClient {
     bobIndex = store.settings.bobIndex,
     changeIndex = store.settings.changeIndex,
   }) {
-    const { blindlinkClient, settings: { disableAutoChange } } = store;
-    if (blindlinkClient) {
-      blindlinkClient.updateKeyIndexes({
+    const {
+      bobClient,
+      settings: { disableAutoChange },
+    } = store;
+    if (bobClient) {
+      bobClient.updateKeyIndexes({
         aliceIndex,
         bobIndex,
         changeIndex: disableAutoChange ? changeIndex : undefined,
       });
-      store.settings.changeIndex = blindlinkClient.changeIndex;
-      store.settings.bobIndex = blindlinkClient.bobIndex;
-      store.settings.aliceIndex = blindlinkClient.aliceIndex;
+      store.settings.changeIndex = bobClient.changeIndex;
+      store.settings.bobIndex = bobClient.bobIndex;
+      store.settings.aliceIndex = bobClient.aliceIndex;
       store.save();
       this.refreshAddresses();
     }
   }
   toggleConnect() {
-    const { blindlinkClient } = store;
-    if (blindlinkClient) {
-      if (blindlinkClient.serverConnect) {
-        blindlinkClient.disconnect();
+    const { bobClient } = store;
+    if (bobClient) {
+      if (bobClient.isConnected || bobClient.isConnecting) {
+        bobClient.disconnect();
       } else {
-        blindlinkClient.connect();
+        bobClient.connect();
       }
       this.getRoundInfo();
     }
   }
   disconnect() {
-    const { blindlinkClient } = store;
-    if (blindlinkClient) {
-      blindlinkClient.disconnect();
+    const { bobClient } = store;
+    if (bobClient) {
+      bobClient.disconnect();
     }
   }
   getRoundInfo() {
-    const { blindlinkClient } = store;
-    store.roundInfo = blindlinkClient ? blindlinkClient.getRoundInfo() : null;
+    const { bobClient } = store;
+    store.roundInfo = bobClient ? bobClient.getRoundInfo() : {};
   }
 }
 

@@ -1,12 +1,12 @@
 const test = require('tape');
 const Coordinator = require('../server/coordinator');
-const Client = require('../dist/client/client').default;
+const Client = require('../dist/blindlink/client/client').default;
 const bcoin = require('bcoin');
 
 const { USE_BITCORE } = require('./config');
 
-const BitcoinBitcore = require('../dist/client/bitcoin_bitcore');
-const BitcoinBcoin = require('../dist/client/bitcoin_bcoin').default;
+const BitcoinBitcore = require('../dist/blindlink/client/bitcoin_bitcore');
+const BitcoinBcoin = require('../dist/blindlink/client/bitcoin_bcoin').default;
 let bitcoinUtils;
 if (USE_BITCORE) {
   bitcoinUtils = new BitcoinBitcore('testnet');

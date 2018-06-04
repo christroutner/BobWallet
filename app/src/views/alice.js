@@ -32,7 +32,7 @@ class Alice extends Component {
     const { flash, flashColor } = this.state;
     const {
       lastRawTx,
-      computedIsJoining,
+      // computedIsJoining,
       computedAliceHistory,
       roundAddresses: {
         fromAddress,
@@ -77,11 +77,11 @@ class Alice extends Component {
           privateKey={fromPrivateWIF}
           value={aliceIndex}
           derivePath={fromDerive}
-          balance={addressBalances[fromAddress]}
+          balance={addressBalances.get(fromAddress)}
           ticker={ticker}
           wholeNumbers={wholeNumbers}
           flashMessage={message => this.flash(message)}
-          disableIncrementor={computedIsJoining}
+          // disableIncrementor={computedIsJoining}
         />
 
         {!simpleMode && (
@@ -141,11 +141,11 @@ class Alice extends Component {
             privateKey={changePrivateWIF}
             value={changeIndex}
             derivePath={changeDerive}
-            balance={addressBalances[changeAddress]}
+            balance={addressBalances.get(changeAddress)}
             ticker={ticker}
             wholeNumbers={wholeNumbers}
             flashMessage={message => this.flash(message)}
-            disableIncrementor={computedIsJoining}
+            // disableIncrementor={computedIsJoining}
           />
         )}
         <ComponentSeparator />

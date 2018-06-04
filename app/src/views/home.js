@@ -16,7 +16,9 @@ import { colors } from '../styles';
 
 class Home extends Component {
   render() {
-    const { settings: { routeTab, simpleMode } } = store;
+    const {
+      settings: { routeTab, simpleMode },
+    } = store;
     return (
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', margin: 20, marginBottom: 0 }}>

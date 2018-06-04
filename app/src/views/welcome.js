@@ -35,13 +35,19 @@ class Welcome extends Component {
         <View style={{ flexDirection: 'row' }}>
           <Button
             color={colors.green}
-            style={{ padding: 4, minWidth: 160 }}
-            text="Create"
+            style={{ padding: 4, minWidth: 110 }}
+            text="Start"
+            onPress={() => ActionsNav.goEasy()}
+          />
+          <Button
+            color={colors.darkgray}
+            style={{ padding: 4, minWidth: 110 }}
+            text="Advanced"
             onPress={() => ActionsNav.goCreateWallet()}
           />
           <Button
-            color={colors.green}
-            style={{ padding: 4, minWidth: 160 }}
+            color={colors.darkgray}
+            style={{ padding: 4, minWidth: 110 }}
             text="Restore"
             onPress={() => ActionsNav.goRestoreWallet()}
           />

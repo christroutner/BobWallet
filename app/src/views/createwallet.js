@@ -146,10 +146,7 @@ class CreateWallet extends Component {
                     nextSelected: true,
                   });
                 } else {
-                  ActionsSettings.downloadBackup({ aliceSeed, bobSeed });
-                  ActionsSettings.copyBackup({ aliceSeed, bobSeed });
-                  ActionsClient.initAlice({ aliceSeed, bobSeed });
-                  ActionsNav.goHome();
+                  ActionsNav.goPro({ aliceSeed, bobSeed });
                 }
               }
             }}

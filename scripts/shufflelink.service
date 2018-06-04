@@ -1,12 +1,12 @@
 [Unit]
-Description=BlindLink
+Description=ShuffleLink
 After=network.target
 
 [Service]
 Type=simple
 Environment=NODE_ENV=production
 WorkingDirectory=/home/pi/BobWallet
-ExecStart=/home/pi/.nvm/versions/node/v9.8.0/bin/node /home/pi/BobWallet/blindlink/server/server.js
+ExecStart=/home/pi/.nvm/versions/node/v9.8.0/bin/node /home/pi/BobWallet/shufflelink/server/index.js
 
 User=nobody
 Group=nogroup
@@ -19,5 +19,3 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-
-# sudo chown nobody:nogroup ./logs

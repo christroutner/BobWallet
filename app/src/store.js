@@ -16,9 +16,10 @@ class Store {
       loaded: false, // Is persistent data loaded
       route: DEFAULT_ROUTE,
 
-      blindlinkClient: null,
+      bobClient: null,
       roundAddresses: {},
-      roundInfo: null,
+      neededFunds: null,
+      roundInfo: {},
       lastRawTx: null,
 
       // Persistent data
@@ -45,8 +46,8 @@ class Store {
         privateBalance: 0,
         totalFees: 0,
       },
-      completedRounds: observable([]),
-      addressBalances: {},
+      completedRounds: observable.array(),
+      addressBalances: observable.map(),
     });
 
     ComputedServer(this);
@@ -79,7 +80,7 @@ class Store {
       AsyncStorage.getItem('completedRounds').then(stateString => {
         const state = JSON.parse(stateString);
         if (state) {
-          this.completedRounds = observable(state);
+          this.completedRounds = observable.array(state);
         }
         console.log('Loaded initial roundsData');
       });
@@ -90,7 +91,7 @@ class Store {
       AsyncStorage.getItem('addressBalances').then(stateString => {
         const state = JSON.parse(stateString);
         if (state) {
-          this.addressBalances = state;
+          this.addressBalances.replace(state);
         }
         console.log('Loaded initial addressBalances');
       });
@@ -157,9 +158,9 @@ class Store {
     this.settings.totalFees = 0;
     this.save();
 
-    this.completedRounds = observable([]);
+    this.completedRounds = observable.array();
     this.saveCompletedRounds();
-    this.addressBalances = {};
+    this.addressBalances = observable.map();
     this.saveAddressBalances();
   }
 }

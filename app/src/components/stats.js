@@ -5,22 +5,24 @@ import { formatSat } from '../helpers';
 import { colors } from '../styles';
 import { observer } from 'mobx-react';
 import store from '../store';
+import moment from 'moment';
 
 class ComponentsStats extends Component {
   render() {
     const {
-      computedServerStatus,
-      computedLastUpdated,
+      // computedServerStatus,
+      // computedLastUpdated,
       computedRoundsLeft,
       computedSuccessfulRounds,
       computedFailedRounds,
-      computedIsJoined,
+      // computedIsJoined,
+      roundInfo,
       settings: { ticker, wholeNumbers, totalFees, privateBalance },
     } = store;
-    const safeServerStatus = computedServerStatus || {};
+    // const safeServerStatus = computedServerStatus || {};
 
     const leftStyle = {
-      color: computedServerStatus ? colors.gray : colors.background,
+      color: roundInfo.isConnected ? colors.gray : colors.background,
       textAlign: 'right',
       borderWidth: 0.5,
       borderColor: colors.gray,
@@ -28,7 +30,7 @@ class ComponentsStats extends Component {
       paddingRight: 0,
     };
     const rightStyle = {
-      color: computedServerStatus ? colors.white : colors.background,
+      color: roundInfo.isConnected ? colors.white : colors.background,
       textAlign: 'left',
       borderWidth: 0.5,
       borderColor: colors.gray,
@@ -40,7 +42,7 @@ class ComponentsStats extends Component {
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row' }}>
           <View>
-            <Text style={leftStyle2}>Joined Round:</Text>
+            {/* <Text style={leftStyle2}>Joined Round:</Text> */}
             <Text style={leftStyle2}>Successful Rounds:</Text>
             <Text style={leftStyle2}>Failed Rounds:</Text>
             <Text style={leftStyle2}>Rounds Left:</Text>
@@ -50,13 +52,13 @@ class ComponentsStats extends Component {
             <Text style={leftStyle}>Server Version:</Text>
             <Text style={leftStyle}>Bobs Needed:</Text>
             <Text style={leftStyle}>Bobs Joined:</Text>
-            <Text style={leftStyle}>Amount:</Text>
+            <Text style={leftStyle}>Denomination:</Text>
             <Text style={leftStyle}>Network Fee:</Text>
             <Text style={leftStyle}>Server State:</Text>
             <Text style={leftStyle}>Last Updated:</Text>
           </View>
           <View>
-            <Text style={rightStyle2}> {computedIsJoined ? 'Yes' : 'No'}</Text>
+            {/* <Text style={rightStyle2}> {computedIsJoined ? 'Yes' : 'No'}</Text> */}
             <Text style={rightStyle2}> {computedSuccessfulRounds}</Text>
             <Text style={rightStyle2}> {computedFailedRounds}</Text>
             <Text style={rightStyle2}> {computedRoundsLeft}</Text>
@@ -69,22 +71,21 @@ class ComponentsStats extends Component {
               {formatSat(privateBalance, ticker, wholeNumbers)}
             </Text>
             <Text style={leftStyle}>Server Stats</Text>
-            <Text style={rightStyle}> {safeServerStatus.version}</Text>
-            <Text style={rightStyle}> {safeServerStatus.min_pool}</Text>
-            <Text style={rightStyle}> {safeServerStatus.alices}</Text>
+            <Text style={rightStyle}> {roundInfo.version}</Text>
+            <Text style={rightStyle}> {roundInfo.min_pool}</Text>
+            <Text style={rightStyle}> {roundInfo.joined}</Text>
             <Text style={rightStyle}>
               {' '}
-              {formatSat(safeServerStatus.denomination, ticker, wholeNumbers)}
+              {formatSat(roundInfo.denomination, ticker, wholeNumbers)}
             </Text>
             <Text style={rightStyle}>
               {' '}
-              {formatSat(safeServerStatus.fees, ticker, wholeNumbers)}
+              {formatSat(roundInfo.fees, ticker, wholeNumbers)}
             </Text>
-            <Text style={rightStyle}> {safeServerStatus.state}</Text>
+            <Text style={rightStyle}> {roundInfo.currentState}</Text>
             <Text style={rightStyle}>
               {' '}
-              {computedLastUpdated} second{computedLastUpdated === 1 ? '' : 's'}{' '}
-              ago
+              {moment(roundInfo.lastUpdated).fromNow()}
             </Text>
           </View>
         </View>

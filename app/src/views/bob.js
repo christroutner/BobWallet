@@ -59,7 +59,7 @@ class Bob extends Component {
           privateKey={toPrivateWIF}
           value={bobIndex}
           derivePath={toDerive}
-          balance={addressBalances[toAddress]}
+          balance={addressBalances.get(toAddress)}
           ticker={ticker}
           wholeNumbers={wholeNumbers}
           disableIncrementor={

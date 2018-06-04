@@ -88,7 +88,7 @@ class Join extends Component {
             simpleMode={simpleMode}
           />
         </View>
-        <ComponentSeparator style={{ marginTop: 0 }} />
+        <ComponentSeparator style={{ marginTop: 0, marginBottom: 0 }} />
         <ComponentErrors />
         <ComponentProgress />
       </View>

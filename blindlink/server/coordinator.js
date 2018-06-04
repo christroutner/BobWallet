@@ -1,5 +1,5 @@
 const BlindSignature = require('blind-signatures');
-const SERVER_VERSION = require('../package.json').version;
+const SERVER_VERSION = require('../../package.json').version;
 const SERVER_STATES = require('../client/server_states');
 const path = require('path');
 let consoleLog = {
@@ -46,7 +46,7 @@ class Coordinator {
   }) {
     if (LOG_TO_FILE) {
       consoleLog = require('simple-node-logger').createSimpleLogger({
-        logFilePath: path.join(__dirname, '../logs/coordinator.log'),
+        logFilePath: path.join(__dirname, '../../logs/coordinator.log'),
         timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
       });
     }

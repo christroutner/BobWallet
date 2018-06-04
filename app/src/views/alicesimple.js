@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { observer } from 'mobx-react';
 import { Text, TextB } from '../components/text';
 import ActionsClient from '../actions/client';
-import ActionsSettings from '../actions/settings';
 import ComponentAddress from '../components/address';
 import ComponentProgress from '../components/progress';
 import ComponentErrors from '../components/errors';
@@ -11,9 +10,10 @@ import Button from '../components/button';
 import ComponentBackground from '../components/background';
 import { View, Linking } from 'react-native';
 import { colors } from '../styles';
-import { TOR_URL, TESTNET_FAUCET_URL } from '../config';
+import { TESTNET_FAUCET_URL } from '../config';
 import store from '../store';
 import { formatSat } from '../helpers';
+import moment from 'moment';
 
 class AliceSimple extends Component {
   constructor() {
@@ -35,19 +35,15 @@ class AliceSimple extends Component {
     const { flash } = this.state;
 
     const {
+      roundInfo,
+      computedLowBalance,
       roundAddresses: { fromAddress },
       computedBobBalance,
-      computedServerStatus,
-      computedIsConnected,
       computedSuccessfulRounds,
-      computedInsufficientBalance,
-      computedAttemptedJoin,
       computedRoundsLeft,
-      computedLastUpdated,
       addressBalances,
       settings: { wholeNumbers, ticker, aliceIndex },
     } = store;
-    const safeServerStatus = computedServerStatus || {};
 
     return (
       <View
@@ -61,9 +57,8 @@ class AliceSimple extends Component {
           {flash}{' '}
         </TextB>
 
-        {computedIsConnected &&
-          computedAttemptedJoin &&
-          computedInsufficientBalance && (
+        {roundInfo.isConnected &&
+          computedLowBalance && (
             <View
               style={{
                 flex: 1,
@@ -93,7 +88,7 @@ class AliceSimple extends Component {
                 }
                 value={aliceIndex}
                 address={fromAddress}
-                balance={addressBalances[fromAddress]}
+                balance={addressBalances.get(fromAddress)}
                 ticker={ticker}
                 wholeNumbers={wholeNumbers}
                 flashMessage={message => this.flash(message)}
@@ -101,7 +96,7 @@ class AliceSimple extends Component {
               />
               <Button
                 color={colors.green}
-                text="Don't have any Testnet Bitcoin? Click here!"
+                text="Get Testnet Bitcoins Here!"
                 onPress={() => {
                   Linking.openURL(TESTNET_FAUCET_URL);
                 }}
@@ -128,8 +123,8 @@ class AliceSimple extends Component {
               </Text>
             </View>
           )}
-        {computedIsConnected &&
-          !computedInsufficientBalance && (
+        {roundInfo.isConnected &&
+          !computedLowBalance && (
             <View style={{ flex: 1, marginBottom: 10 }}>
               <View
                 style={{
@@ -138,15 +133,9 @@ class AliceSimple extends Component {
                   justifyContent: 'center',
                 }}
               >
-                {computedAttemptedJoin ? (
-                  <TextB style={{ marginBottom: 6, fontSize: 16 }}>
-                    You have joined!
-                  </TextB>
-                ) : (
-                  <TextB style={{ marginBottom: 6, fontSize: 16 }}>
-                    Joining Round...
-                  </TextB>
-                )}
+                <TextB style={{ marginBottom: 6, fontSize: 16 }}>
+                  Joining Rounds...
+                </TextB>
                 <View
                   style={{
                     flexDirection: 'row',
@@ -161,17 +150,15 @@ class AliceSimple extends Component {
                     {' '}
                     Successful Rounds.
                   </Text>
-                  {computedRoundsLeft !== false && (
-                    <Text style={{ color: colors.gray, fontSize: 16 }}>
-                      {' '}
-                      {computedRoundsLeft} Rounds Left.
-                    </Text>
-                  )}
+                  <Text style={{ color: colors.gray, fontSize: 16 }}>
+                    {' '}
+                    {computedRoundsLeft} Rounds Left.
+                  </Text>
                 </View>
                 <Text
                   style={{ color: colors.gray, fontSize: 16, marginBottom: 6 }}
                 >{`${formatSat(
-                  addressBalances[fromAddress],
+                  addressBalances.get(fromAddress),
                   ticker,
                   wholeNumbers
                 )} Public → ${formatSat(
@@ -180,15 +167,11 @@ class AliceSimple extends Component {
                   wholeNumbers
                 )} Private`}</Text>
 
-                {computedServerStatus ? (
+                {roundInfo ? (
                   <Text style={{ marginTop: 60, color: colors.gray }}>
                     Note: Every successful round moves{' '}
-                    {formatSat(
-                      safeServerStatus.denomination,
-                      ticker,
-                      wholeNumbers
-                    )}{' '}
-                    of your Public Bitcoin into your Private Wallet.
+                    {formatSat(roundInfo.denomination, ticker, wholeNumbers)} of
+                    your Public Bitcoin into your Private Wallet.
                   </Text>
                 ) : (
                   <Text style={{ marginTop: 60, color: colors.gray }}>
@@ -205,16 +188,16 @@ class AliceSimple extends Component {
                   Private keys are NEVER sent to the server and cannot be
                   stolen.
                 </Text>
-                {computedServerStatus && (
+                {roundInfo && (
                   <Text style={{ marginTop: 6, color: colors.gray }}>
                     Transaction miner fee per round:{' '}
-                    {formatSat(safeServerStatus.fees, ticker, wholeNumbers)}
+                    {formatSat(roundInfo.fees, ticker, wholeNumbers)}
                   </Text>
                 )}
               </View>
             </View>
           )}
-        {!computedIsConnected && (
+        {!roundInfo.isConnected && (
           <View
             style={{
               flex: 1,
@@ -228,41 +211,39 @@ class AliceSimple extends Component {
             <View style={{ height: 6 }} />
             <Spinner />
             <View style={{ height: 6 }} />
-            <TextB style={{}}>
+            {/* <TextB style={{}}>
               Note: You must be using the Tor Browser in order to connect!
             </TextB>
             <View style={{ height: 6 }} />
             <Button
               text="Download Tor Here"
               onPress={() => Linking.openURL(TOR_URL)}
-            />
-            <Button
+            /> */}
+            {/* <Button
               color={colors.green}
               text="Copy Wallet Backup"
               onPress={() => {
                 ActionsSettings.copyBackup();
                 this.flash('Copied Wallet Backup to Clipboard.');
               }}
-            />
+            /> */}
           </View>
         )}
 
         <ComponentErrors />
-        {computedServerStatus && (
-          <Text
-            style={{
-              alignSelf: 'center',
-              marginBottom: 10,
-              color: colors.gray,
-            }}
-          >
-            Last Updated: {computedLastUpdated} second{computedLastUpdated === 1
-              ? ' ago '
-              : 's ago'}
-          </Text>
-        )}
-        {computedIsConnected &&
-          !computedInsufficientBalance && <ComponentProgress />}
+        {/* {roundInfo &&
+          roundInfo.lastUpdated && (
+            <Text
+              style={{
+                alignSelf: 'center',
+                marginBottom: 10,
+                color: colors.gray,
+              }}
+            >
+              Last Updated: {moment(roundInfo.lastUpdated).fromNow()}
+            </Text>
+          )} */}
+        {roundInfo.isConnected && !computedLowBalance && <ComponentProgress />}
       </View>
     );
   }
