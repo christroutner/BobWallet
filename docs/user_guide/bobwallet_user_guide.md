@@ -41,7 +41,7 @@ The Public Wallet is where you will deposit the coins that you would like to mix
 
 Click the address shown on the Public Wallet tab of your Bob Wallet to copy the address to your clipboard. Visit [this testnet bitcoin faucet](https://testnet.manu.backend.hamburg/faucet), paste your address, then click `Give me some coins` to have testnet coins sent to your address. You may need to complete a CAPTCHA before the website will let you click the button to receive testnet bitcoins.
 
-![](5_bobtest.png)
+![](11_bobtest.png)
 
 ## Step 5. Mix your coins
 
