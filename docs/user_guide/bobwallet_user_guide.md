@@ -1,7 +1,7 @@
 # Bob Wallet User Guide
 
-**Documentation Version 1.0**  
-**BobWallet Version 0.0.4**  
+**Documentation Version 1.1**  
+**Bob Wallet Version 0.1.0**  
 
 Note: The version of Bob Wallet that this guide is written for only runs on the bitcoin testnet.
 
