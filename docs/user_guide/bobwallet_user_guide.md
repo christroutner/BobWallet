@@ -17,14 +17,14 @@ Tor Browser is used to anonymize the connection between Bob Wallet and the mixin
 
 You can open Bob Wallet by visiting the website [https://bobwallet.github.io](https://bobwallet.github.io) OR [download Bob Wallet](https://github.com/BobWallet/BobWallet/archive/master.zip), unzip the BobWallet zip folder, and open (drag and drop) `bobwallet.html` from the unzipped folder into your browser.
 
-![](1_bobwalletcreate.png)
+![](bob_wallet_new_welcome.png)
 
 ## Step 3. Create a new Bob Wallet
 
 **Easy**
 Click the `Start` button to create a new Bob Wallet. Save the backup file somewhere on your computer so you can pick up where you leave off if you need to close Bob Wallet. Since this is only a testnet wallet, you don't have to be as careful about how this backup file is stored as you would be if it were storing real value on the bitcoin mainnet.
 
-
+![](3_bobempty.png)
 
 **Advanced**
 Click `Advanced` to manually enter your seed phrases. Fill out each field by hand with a valid seed phrase or click the `Generate` buttons to have Bob Wallet generate your seed phrases for you.
@@ -33,13 +33,11 @@ Click `Next` then `Download Backup` to proceed to the next screen. Save the back
 
 _The wallet seeds shown in the image below are only examples and should not be reused in your own wallet._
 
-![](3_bobempty.png)
+![](2_bobseed.png)
 
 ## Step 4. Deposit testnet bitcoin into your Public Wallet
 
 The Public Wallet is where you will deposit the coins that you would like to mix. The Private Wallet is where the coins will end up after they have been mixed.
-
-![](2_bobseed.png)
 
 Click the address shown on the Public Wallet tab of your Bob Wallet to copy the address to your clipboard. Visit [this testnet bitcoin faucet](https://testnet.manu.backend.hamburg/faucet), paste your address, then click `Give me some coins` to have testnet coins sent to your address. You may need to complete a CAPTCHA before the website will let you click the button to receive testnet bitcoins.
 
