@@ -18,6 +18,8 @@ Bob Wallet is not a traditional Bitcoin wallet. You cannot use it to make a paym
 5. A successful round will send a portion of your Public Bitcoin into your Private Wallet
 6. Bob Wallet will automatically add you into following rounds until all of your Public Bitcoin is moved to your Private Wallet
 
+There is also a [User Guide with screenshots](https://github.com/BobWallet/BobWallet/blob/master/docs/user_guide/bobwallet_user_guide.md) located in the Docs folder of this repo.
+
 ## Voting Booth (Donations)
 BTC: [15fMSRKT8pP1XMfc6YM7ckH87uc9YaRcaa](bitcoin:15fMSRKT8pP1XMfc6YM7ckH87uc9YaRcaa)
 
