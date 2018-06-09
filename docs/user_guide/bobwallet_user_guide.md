@@ -45,7 +45,7 @@ Click the address shown on the Public Wallet tab of your Bob Wallet to copy the 
 
 ## Step 5. Mix your coins
 
-Once the testnet deposit is confirmed, Bob Wallet will automatically enter you into CoinJoin rounds with every other Bob Wallet user. Successful rounds will move coins from your Public Wallet to your Private Wallet. Bob Wallet will automatically add you into subsequent rounds until all of your Public Bitcoin is moved to your Private Wallet.
+Once the testnet deposit is confirmed, Bob Wallet will automatically enter you into CoinJoin rounds with other Bob Wallet users. Successful rounds will move coins from your Public Wallet to your Private Wallet. Bob Wallet will automatically add you into subsequent rounds until all of your Public Bitcoin is moved to your Private Wallet.
 
 Bob Wallet must be kept open for the mixing process to happen. If you disconnect during the Join stage you will be removed from the round. If you disconnect mid-round then you will be blamed for stopping the round and a new round will start without you. Right now it is less important if a round is stopped since punishments haven't yet been added and rounds are quick.
 
@@ -69,6 +69,6 @@ You can also enable Pro mode to see what is going on behind the scenes in Bob Wa
 
 ## Support Bob Wallet
 
-Contribute code and help document and test Bob Wallet: https://github.com/BobWallet/BobWallet
+Contribute code, designs, and help document and test Bob Wallet: https://github.com/BobWallet/BobWallet
 
-Help cover the expenses of developing Bob Wallet: 15fMSRKT8pP1XMfc6YM7ckH87uc9YaRcaa
+Help cover the expenses of developing Bob Wallet: 15fMSRKT8pP1XMfc6YM7ckH87uc9aRcaa
