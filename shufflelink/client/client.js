@@ -14,6 +14,7 @@ class Client {
 
     CHAIN = 'testnet',
     min_pool = 2,
+    version = 'unknown',
 
     callbackStateChange,
     callbackError,
@@ -21,6 +22,7 @@ class Client {
     callbackBalance,
   }) {
     this.CHAIN = CHAIN;
+    this.version = version;
     this.bitcoinUtils = bitcoinUtils;
 
     this.callbackStateChange = callbackStateChange;
@@ -149,6 +151,7 @@ class Client {
       keys: { fromAddress, changeAddress, fromPrivate },
     } = this.roundParams;
     return {
+      version: this.version,
       fromAddress,
       changeAddress,
       publicKey,
@@ -200,11 +203,19 @@ class Client {
         const decrypted = Shuffle.decrypt(privateKey, layer);
         returnOnions.push(decrypted);
       }
-      let encrypted = Shuffle.a2hex(toAddress);
+      let encrypted = this.bitcoinUtils.addressToHex(toAddress);
       for (let i = publicKeys.length - 1; i >= index; i--) {
         encrypted = Shuffle.encrypt(publicKeys[i].key, encrypted);
       }
       returnOnions.push(encrypted);
+      for (const onion of returnOnions) {
+        if (onion.length !== returnOnions[0].length) {
+          console.log(
+            `ERROR: Invalid length: ${onion.length}, ${returnOnions[0].length}`
+          );
+          throw new Error(`Invalid onion lengths`);
+        }
+      }
       Shuffle.shuffle(returnOnions);
       return { onions: returnOnions };
     } catch (err) {

@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { observer } from 'mobx-react';
 import ActionsNav from '../actions/nav';
 import ActionsClient from '../actions/client';
-import ActionsSettings from '../actions/settings';
 import { Text, TextB } from '../components/text';
 import TextInput from '../components/textinput';
 import Button from '../components/button';

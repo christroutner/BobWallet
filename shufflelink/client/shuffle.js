@@ -4,11 +4,15 @@ window = typeof window === 'undefined' ? {} : window;
 const JSEncrypt = require('jsencrypt').default;
 
 const aesjs = require('aes-js');
-const shuffle = require('shuffle-array');
+const shuffle = require('crypto-shuffle');
 const randomBytes = require('randombytes');
 
 // const AES_KEY_LENGTH = 16; // 128bit
 const AES_KEY_LENGTH = 32; // 256bit
+// const RSA_KEY_LENGTH = 512;
+const RSA_KEY_LENGTH = 1024;
+// const RSA_KEY_LENGTH = 2048;
+const IV_LENGTH = 16;
 
 function a2hex(str) {
   return new Buffer(str, 'utf8').toString('hex');
@@ -16,57 +20,59 @@ function a2hex(str) {
 function hex2a(hexx) {
   return new Buffer(hexx, 'hex').toString('utf8');
 }
-function base64ToHex(str) {
-  return new Buffer(str, 'base64').toString('hex');
+function base64ToHex(str, length) {
+  let hex = new Buffer(str, 'base64').toString('hex');
+  while (hex.length < length) {
+    hex = `0${hex}`;
+  }
+  return hex;
 }
 function hexToBase64(str) {
   return new Buffer(str, 'hex').toString('base64');
 }
-function decimalToHex(num) {
-  const hex = Number(num).toString(16);
-  return hex.length === 1 ? `0${hex}` : hex;
-}
-function hexToNumber(hex) {
-  return parseInt(hex, 16);
+function randomHex(size) {
+  let hex = randomBytes(size).toString('hex');
+  while (hex.length < size * 2) {
+    hex = `0${hex}`;
+  }
+  return hex;
 }
 
 // https://en.wikipedia.org/wiki/Hybrid_cryptosystem
 function encrypt(key, text) {
-  const aesKey = randomBytes(AES_KEY_LENGTH).toString('hex');
-  const ivData = randomBytes(16);
+  const aesKey = randomHex(AES_KEY_LENGTH);
+  const ivHex = randomHex(IV_LENGTH);
+  const ivBytes = aesjs.utils.hex.toBytes(ivHex);
   const aesKeyArray = aesjs.utils.hex.toBytes(aesKey);
   const textBytes = aesjs.utils.hex.toBytes(text);
-  const aesCtr = new aesjs.ModeOfOperation.ctr(aesKeyArray, ivData);
+  const aesCtr = new aesjs.ModeOfOperation.ctr(aesKeyArray, ivBytes);
   const encryptedBytes = aesCtr.encrypt(textBytes);
   const encryptedHex = aesjs.utils.hex.fromBytes(encryptedBytes);
-  const rsaEncrypt = new JSEncrypt();
+  const rsaEncrypt = new JSEncrypt({ default_key_size: RSA_KEY_LENGTH });
   rsaEncrypt.setPublicKey(key);
-  const encryptedKey = base64ToHex(rsaEncrypt.encrypt(aesKey));
-  const length = decimalToHex(encryptedKey.length / 2);
-  const ivLength = decimalToHex(ivData.length);
-  const ivHex = ivData.toString('hex');
-  return `${length}${encryptedKey}${ivLength}${ivHex}${encryptedHex}`;
+  const keyLength =
+    AES_KEY_LENGTH * ((RSA_KEY_LENGTH / 8 / AES_KEY_LENGTH) * 2);
+  const encryptedKey = base64ToHex(rsaEncrypt.encrypt(aesKey), keyLength);
+  // console.log(encryptedKey.length, ivHex.length, encryptedHex.length);
+  return `${encryptedKey}${ivHex}${encryptedHex}`;
 }
 
 function decrypt(key, cypher) {
+  const keyLength =
+    AES_KEY_LENGTH * ((RSA_KEY_LENGTH / 8 / AES_KEY_LENGTH) * 2);
   let position = 0;
-  const length = hexToNumber(cypher.slice(0, 2));
-  position = 2;
-  const rsaData = hexToBase64(cypher.slice(position, position + length * 2));
-  position = position + length * 2;
-  const ivLength = hexToNumber(cypher.slice(position, position + 2));
-  position = position + 2;
-  const ivData = aesjs.utils.hex.toBytes(
-    cypher.slice(position, position + ivLength * 2)
-  );
-  position = position + ivLength * 2;
+  const rsaData = hexToBase64(cypher.slice(position, position + keyLength));
+  position = position + keyLength;
+  const ivHex = cypher.slice(position, position + IV_LENGTH * 2);
+  const ivBytes = aesjs.utils.hex.toBytes(ivHex);
+  position = position + IV_LENGTH * 2;
   const aesData = cypher.slice(position);
-  const rsaDecrypt = new JSEncrypt({ log: true });
+  const rsaDecrypt = new JSEncrypt({ default_key_size: RSA_KEY_LENGTH });
   rsaDecrypt.setPrivateKey(key);
   const aesKey = rsaDecrypt.decrypt(rsaData);
   const aesKeyArray = aesjs.utils.hex.toBytes(aesKey);
   const textBytes = aesjs.utils.hex.toBytes(aesData);
-  const aesCtr = new aesjs.ModeOfOperation.ctr(aesKeyArray, ivData);
+  const aesCtr = new aesjs.ModeOfOperation.ctr(aesKeyArray, ivBytes);
   const decryptedBytes = aesCtr.decrypt(textBytes);
   const encryptedHex = aesjs.utils.hex.fromBytes(decryptedBytes);
   return encryptedHex;
@@ -74,7 +80,7 @@ function decrypt(key, cypher) {
 
 function validateKeys(pubKey, privKey) {
   try {
-    const key = new JSEncrypt();
+    const key = new JSEncrypt({ default_key_size: RSA_KEY_LENGTH });
     key.setPrivateKey(privKey);
     if (key.getPublicKey() === pubKey) {
       return true;
@@ -86,7 +92,7 @@ function validateKeys(pubKey, privKey) {
 }
 
 function generateKey() {
-  const key = new JSEncrypt();
+  const key = new JSEncrypt({ default_key_size: RSA_KEY_LENGTH });
   key.getPublicKey();
   return key;
 }

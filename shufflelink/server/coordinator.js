@@ -1,6 +1,7 @@
 const SERVER_STATES = require('../client/server_states');
 const SERVER_VERSION = require('../../package.json').version;
 const Shuffle = require('../client/shuffle');
+const path = require('path');
 const randombytes = require('randombytes');
 const sha256 = require('js-sha256');
 
@@ -19,6 +20,12 @@ class Coordinator {
     PUNISH_BAN_LIMIT = 2,
   }) {
     this.consoleLog = consoleLog;
+    if (CONFIG.LOG_TO_FILE) {
+      this.consoleLog = require('simple-node-logger').createSimpleLogger({
+        logFilePath: path.join(__dirname, '../../logs/coordinator.log'),
+        timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+      });
+    }
     this.bitcoinUtils = bitcoinUtils;
     this.DEBUG_TEST_MODE = DEBUG_TEST_MODE;
     this.CONFIG = CONFIG;
@@ -205,7 +212,7 @@ class Coordinator {
     }
     const bobs = [];
     for (const onion of onions) {
-      const toAddress = Shuffle.hex2a(onion);
+      const toAddress = this.bitcoinUtils.hexToAddress(onion);
       if (this.bitcoinUtils.isInvalid(toAddress)) {
         await this.blameGame(alices);
         // await this.roundError('Failed at shuffling 2');
@@ -306,7 +313,11 @@ class Coordinator {
     verifyJoin,
     connection,
     min_pool,
+    version,
   }) {
+    if (version !== SERVER_VERSION) {
+      return { error: `Out of date. Update to version ${SERVER_VERSION}` };
+    }
     if (
       this.bitcoinUtils.isInvalid(fromAddress) ||
       this.bitcoinUtils.isInvalid(changeAddress)
@@ -344,7 +355,8 @@ class Coordinator {
       return { ...response, error: 'Not enough Bitcoin in your Wallet' };
     }
     if (!this.alices[fromAddress]) {
-      this.consoleLog.info(`User joined: ${fromAddress}`);
+      // this.consoleLog.info(`User joined: ${fromAddress}`);
+      console.log(`User joined: ${fromAddress}`);
     }
     this.alices[fromAddress] = {
       fromAddress,
@@ -401,9 +413,10 @@ class Coordinator {
         }
       }
     }
-    for (const address of punish) {
-      this.punishedUsers[address] = (this.punishedUsers[address] || 0) + 1;
-    }
+    // TODO: Punish
+    // for (const address of punish) {
+    //   this.punishedUsers[address] = (this.punishedUsers[address] || 0) + 1;
+    // }
 
     const error = `Round failed at state: ${this.roundState}`;
     this.consoleLog.error(

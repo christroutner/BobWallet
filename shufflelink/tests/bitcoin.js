@@ -3,8 +3,7 @@ const bcoin = require('bcoin');
 
 const BitcoinBcoin = require('../dist/shufflelink/client/bitcoin_bcoin')
   .default;
-let bitcoinUtils;
-bitcoinUtils = new BitcoinBcoin({ CHAIN: 'testnet', bcoin });
+let bitcoinUtils = new BitcoinBcoin({ CHAIN: 'testnet', bcoin });
 
 const seed1 =
   'price shy bulb dutch fiber coral chunk burden noodle uniform endorse pyramid';
@@ -268,5 +267,14 @@ test('Test compareUtxoSets', async t => {
     t.equal(err.data[0], 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV');
   }
 
+  t.end();
+});
+
+test('Test address to hex', async t => {
+  t.plan(1);
+  const addr = 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV';
+  const hex = bitcoinUtils.addressToHex(addr);
+  const address = bitcoinUtils.hexToAddress(hex);
+  t.equal(addr, address);
   t.end();
 });

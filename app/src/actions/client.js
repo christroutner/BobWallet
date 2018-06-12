@@ -1,6 +1,6 @@
 import store from '../store';
 import { observe, action } from 'mobx';
-import { DEFAULT_ROUTE, DEFAULT_TAB, DEFAULT_CHAIN } from '../config';
+import { DEFAULT_ROUTE, DEFAULT_TAB, DEFAULT_CHAIN, VERSION } from '../config';
 
 // import Client from '../blindlink/client';
 // import Bitcoin from '../blindlink/bitcoin_bcoin';
@@ -67,6 +67,7 @@ class ActionsClient {
 
     store.bobClient = new Client({
       CHAIN: DEFAULT_CHAIN,
+      version: VERSION,
       // DISABLE_UTXO_FETCH: true,
       bitcoinUtils,
       aliceSeed,

@@ -5,36 +5,13 @@ const cors = require('cors');
 const path = require('path');
 const Coordinator = require('../server/coordinator');
 
-let consoleLog = {
-  info: (...msg) => console.log('SERVER: ', ...msg),
-  warn: (...msg) => console.log('SERVER: ', ...msg),
-  error: (...msg) => console.log('SERVER ERROR: ', ...msg),
-  log: (...msg) => console.log('SERVER: ', ...msg),
-};
-
 class Server extends Coordinator {
   constructor(params) {
     super(params);
 
     const {
-      CONFIG: {
-        LOG_TO_FILE,
-        SERVE_STATIC_APP,
-        PRODUCTION,
-        EMAIL,
-        PROD_URL,
-        PORT,
-        TIMEOUT,
-      },
+      CONFIG: { SERVE_STATIC_APP, PRODUCTION, EMAIL, PROD_URL, PORT, TIMEOUT },
     } = params;
-
-    this.consoleLog = consoleLog;
-    if (LOG_TO_FILE) {
-      this.consoleLog = require('simple-node-logger').createSimpleLogger({
-        logFilePath: path.join(__dirname, '../../logs/coordinator.log'),
-        timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-      });
-    }
 
     if (SERVE_STATIC_APP) {
       app.use(cors());

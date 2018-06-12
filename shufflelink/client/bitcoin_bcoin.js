@@ -64,6 +64,15 @@ class Bitcoin {
       return true;
     }
   }
+  addressToHex(address) {
+    return this.bcoin.primitives.Address.fromBase58(address)
+      .toRaw()
+      .toString('hex');
+  }
+  hexToAddress(hex) {
+    const raw = new Buffer(hex, 'hex');
+    return this.bcoin.primitives.Address.fromRaw(raw).toBase58();
+  }
 
   generateAddresses({
     aliceSeed,

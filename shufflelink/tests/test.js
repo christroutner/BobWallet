@@ -3,6 +3,7 @@ window = typeof window === 'undefined' ? {} : window;
 const test = require('tape');
 const Network = require('../dist/shufflelink/client/network').default;
 const Servers = require('../server/server');
+const version = require('../../package.json').version;
 
 let CONFIG = {
   // BCOIN_URI: 'localhost:18332',
@@ -33,6 +34,7 @@ test('1 Test socket.io', async t => {
   let Clients = [];
   for (let i = 0; i < NUM_OF_USERS; i++) {
     const client = new Network({
+      version,
       bitcoinUtils,
       serverAddress: `http://localhost:${CONFIG.PORT}`,
       callbackBalance: response => {
@@ -76,6 +78,7 @@ test('2 Test timeout', async t => {
   let Clients = [];
   for (let i = 0; i < NUM_OF_USERS; i++) {
     const client = new Network({
+      version,
       bitcoinUtils,
       serverAddress: `http://localhost:${CONFIG.PORT}`,
       callbackBalance: response => {
@@ -127,6 +130,7 @@ test('3 Test min_pool server', async t => {
   let Clients = [];
   for (let i = 0; i < NUM_OF_USERS; i++) {
     const client = new Network({
+      version,
       min_pool: NUM_OF_USERS + 1,
       bitcoinUtils,
       serverAddress: `http://localhost:${CONFIG.PORT}`,
@@ -168,6 +172,7 @@ test('4 Test min_pool client', async t => {
   let Clients = [];
   for (let i = 0; i < NUM_OF_USERS; i++) {
     const client = new Network({
+      version,
       bitcoinUtils,
       serverAddress: `http://localhost:${CONFIG.PORT}`,
       callbackBalance: response => {

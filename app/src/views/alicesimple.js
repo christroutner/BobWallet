@@ -13,7 +13,6 @@ import { colors } from '../styles';
 import { TESTNET_FAUCET_URL } from '../config';
 import store from '../store';
 import { formatSat } from '../helpers';
-import moment from 'moment';
 
 class AliceSimple extends Component {
   constructor() {
