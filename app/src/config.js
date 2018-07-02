@@ -19,9 +19,15 @@ export const SERVER = 'https://api.bobwallet.fun';
 
 export const WALLET_TOOL_URL = 'https://iancoleman.io/bip39/';
 export const TOR_URL = 'https://www.torproject.org/download/download-easy.html';
-export const TESTNET_FAUCET_URL = 'https://testnet.manu.backend.hamburg/faucet';
-export const BLOCK_EXPLORER_URL = 'https://live.blockcypher.com/btc-testnet/';
-// export const BLOCK_EXPLORER_URL = 'https://www.blocktrail.com/tBTC';
+
+export const TESTNET_FAUCET_URL = {
+  tBTC: 'https://testnet.manu.backend.hamburg/faucet',
+  tBCH: 'https://testnet.manu.backend.hamburg/bitcoin-cash-faucet',
+};
+export const BLOCK_EXPLORER_URL = {
+  tBTC: 'https://live.blockcypher.com/btc-testnet/',
+  tBCH: 'https://test-bch-insight.bitpay.com/',
+};
 export const GITHUB_URL = 'https://github.com/BobWallet/BobWallet';
 
 export const DEFAULT_TICKER = 'tBTC';

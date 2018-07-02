@@ -33,7 +33,14 @@ class Settings extends Component {
 
   render() {
     const {
-      settings: { aliceSeed, bobSeed, lastBackup, simpleMode, wholeNumbers },
+      settings: {
+        aliceSeed,
+        bobSeed,
+        lastBackup,
+        simpleMode,
+        wholeNumbers,
+        chain,
+      },
     } = store;
     const { showSeed, deleteWallet, flash } = this.state;
     return (
@@ -74,7 +81,7 @@ class Settings extends Component {
             <Button
               text="Open Block Explorer"
               color={colors.darkgray}
-              onPress={() => Linking.openURL(BLOCK_EXPLORER_URL)}
+              onPress={() => Linking.openURL(BLOCK_EXPLORER_URL[chain])}
             />
           )}
           {/* <Button

@@ -9,7 +9,6 @@ import Alice from './alice';
 import Bob from './bob';
 import BobSimple from './bobsimple';
 import Settings from './settings';
-import Help from './help';
 import Join from './join';
 import AliceSimple from './alicesimple';
 import { colors } from '../styles';
@@ -22,11 +21,6 @@ class Home extends Component {
     return (
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', margin: 20, marginBottom: 0 }}>
-          {/* <ComponentTab
-            text="Help"
-            selected={routeTab === 'Help'}
-            onPress={() => ActionsNav.goHelp()}
-          /> */}
           {!!simpleMode && (
             <ComponentTab
               text="Public Wallet"
@@ -108,8 +102,6 @@ class Home extends Component {
             <Join />
           ) : routeTab === 'Settings' ? (
             <Settings />
-          ) : routeTab === 'Help' ? (
-            <Help />
           ) : (
             <Text>Unknown Tab</Text>
           )}

@@ -41,7 +41,7 @@ class AliceSimple extends Component {
       computedSuccessfulRounds,
       computedRoundsLeft,
       addressBalances,
-      settings: { wholeNumbers, ticker, aliceIndex },
+      settings: { wholeNumbers, ticker, chain, aliceIndex },
     } = store;
 
     return (
@@ -97,7 +97,7 @@ class AliceSimple extends Component {
                 color={colors.green}
                 text="Get Testnet Bitcoins Here!"
                 onPress={() => {
-                  Linking.openURL(TESTNET_FAUCET_URL);
+                  Linking.openURL(TESTNET_FAUCET_URL[chain]);
                 }}
               />
               <Text

@@ -150,6 +150,7 @@ class Store {
     this.settings.wholeNumbers = true;
     this.settings.disableAutoChange = false;
     this.settings.ticker = DEFAULT_TICKER;
+    this.settings.chain = DEFAULT_CHAIN;
     this.settings.simpleMode = true;
     this.settings.routeTab = DEFAULT_TAB;
     this.settings.version = VERSION;

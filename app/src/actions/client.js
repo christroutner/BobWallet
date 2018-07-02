@@ -1,6 +1,6 @@
 import store from '../store';
 import { observe, action } from 'mobx';
-import { DEFAULT_ROUTE, DEFAULT_TAB, DEFAULT_CHAIN, VERSION } from '../config';
+import { DEFAULT_ROUTE, DEFAULT_TAB, VERSION } from '../config';
 
 import Client from '../shufflelink/network';
 import Bitcoin from '../shufflelink/bitcoin_bcoin';
@@ -12,8 +12,7 @@ const bitcoinUtilsCash = new Bitcoin({
   CHAIN: 'tBCH',
   bcoin: window.bcash,
 });
-const bitcoinUtils = bitcoinUtilsCore;
-const MAPPER = {
+const bitcoinUtils = {
   tBTC: bitcoinUtilsCore,
   tBCH: bitcoinUtilsCash,
 };
@@ -57,7 +56,7 @@ class ActionsClient {
   // }
 
   initAlice({
-    chain = DEFAULT_CHAIN,
+    chain = store.settings.chain,
     aliceSeed = store.settings.aliceSeed,
     bobSeed = store.settings.bobSeed,
     aliceIndex = store.settings.aliceIndex,
@@ -72,7 +71,7 @@ class ActionsClient {
       chain,
       version: VERSION,
       // DISABLE_UTXO_FETCH: true,
-      bitcoinUtils: MAPPER[chain],
+      bitcoinUtils: bitcoinUtils[chain],
       aliceSeed,
       bobSeed,
       aliceIndex,
@@ -211,16 +210,16 @@ class ActionsClient {
   //   // this.getRoundInfo();
   // }
   isValidSeed(seed) {
-    return bitcoinUtils.isMnemonicValid(seed);
+    return bitcoinUtils[store.settings.chain].isMnemonicValid(seed);
   }
   isValidXPub(key) {
-    return bitcoinUtils.isXPubValid(key);
+    return bitcoinUtils[store.settings.chain].isXPubValid(key);
   }
   isInvalid(address) {
-    return bitcoinUtils.isInvalid(address);
+    return bitcoinUtils[store.settings.chain].isInvalid(address);
   }
   newMnemonic() {
-    return bitcoinUtils.newMnemonic();
+    return bitcoinUtils[store.settings.chain].newMnemonic();
   }
   updateKeyIndexes({
     aliceIndex = store.settings.aliceIndex,
