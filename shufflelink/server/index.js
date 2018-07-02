@@ -32,6 +32,8 @@ let bitcoinUtilsCore;
 if (CONFIG.BCOIN) {
   bitcoinUtilsCore = new Bitcoin({
     ...CONFIG,
+    APIKEY: CONFIG.BCOIN_APIKEY,
+    URI: CONFIG.BCOIN_URI,
     bcoin,
   });
 }
@@ -39,7 +41,9 @@ let bitcoinUtilsCash;
 if (CONFIG.BCASH) {
   bitcoinUtilsCash = new Bitcoin({
     ...CONFIG,
-    bcash,
+    APIKEY: CONFIG.BCASH_APIKEY,
+    URI: CONFIG.BCASH_URI,
+    bcoin: bcash,
   });
 }
 

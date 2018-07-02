@@ -5,6 +5,8 @@ const path = require('path');
 const randombytes = require('randombytes');
 const sha256 = require('js-sha256');
 
+const DEFAULT_CHAIN = 'tBTC';
+
 let consoleLog = {
   info: (...msg) => console.log('SERVER: ', ...msg),
   warn: (...msg) => console.log('SERVER: ', ...msg),
@@ -62,13 +64,13 @@ class Coordinator {
   exit() {
     Object.keys(this.tstart).map(key => clearTimeout(this.tstart[key]));
   }
-  getAlices(chain) {
+  getAlices(chain = DEFAULT_CHAIN) {
     return Object.keys(this.alices[chain]).map(key => this.alices[chain][key]);
   }
   getConnections() {
     return Object.keys(this.connections).map(key => this.connections[key]);
   }
-  async broadcastError(error, chain) {
+  async broadcastError(error, chain = DEFAULT_CHAIN) {
     // TODO: Send to only users with chain
     return await this.asyncSend(this.getConnections(), async connection => {
       if (typeof connection.roundError === 'function') {
@@ -76,7 +78,7 @@ class Coordinator {
       }
     });
   }
-  async balance({ address, chain }) {
+  async balance({ address, chain = DEFAULT_CHAIN }) {
     if (this.DEBUG_TEST_MODE) {
       const utxos = this.bitcoinUtils[chain].getFakeUtxos({
         address,
@@ -127,7 +129,7 @@ class Coordinator {
       })
     );
   }
-  async loopStart(chain) {
+  async loopStart(chain = DEFAULT_CHAIN) {
     clearTimeout(this.tstart[chain]);
     try {
       if (this.DEBUG_TEST_MODE) {
@@ -156,7 +158,7 @@ class Coordinator {
       this.loopStart(chain);
     }, this.CONFIG.DELAY_BETWEEN_ROUNDS ? this.CONFIG.DELAY_BETWEEN_ROUNDS * 1000 : 10000); // Check to start every 10 seconds
   }
-  async start({ skipJoins = false, chain }) {
+  async start({ skipJoins = false, chain = DEFAULT_CHAIN }) {
     const connections = this.getConnections();
     if (!this.roundParams || !skipJoins) {
       this.roundState = SERVER_STATES.join;
@@ -341,7 +343,7 @@ class Coordinator {
     connection,
     min_pool,
     version,
-    chain,
+    chain = DEFAULT_CHAIN,
     error,
   }) {
     if (error) {
@@ -413,7 +415,7 @@ class Coordinator {
     };
   }
 
-  async blameGame(alices, chain) {
+  async blameGame(alices, chain = DEFAULT_CHAIN) {
     // TODO: Filter request/disconnect timeouts first
 
     // this.consoleLog.error('Starting Blame Game');
