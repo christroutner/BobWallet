@@ -13,10 +13,14 @@ class Network extends Client {
   checkBalance(address = this.keys.fromAddress) {
     if (this.isConnected && this.socket) {
       return new Promise(resolve => {
-        this.socket.emit('checkBalance', address, balance => {
-          this.updateBalance(balance);
-          resolve(balance);
-        });
+        this.socket.emit(
+          'checkBalance',
+          { address, chain: this.chain },
+          balance => {
+            this.updateBalance(balance);
+            resolve(balance);
+          }
+        );
       });
     }
   }

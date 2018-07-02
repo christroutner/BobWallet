@@ -1,33 +1,42 @@
-const Insight = require('bitcore-explorers').Insight;
+// const Insight = require('bitcore-explorers').Insight;
 const bitcoinMessage = require('bitcoinjs-message');
 const bitcoin = require('bitcoinjs-lib');
 const axios = require('axios');
+const cashaddr = require('cashaddrjs');
+// const { cashaddr } = require('bstring');
+
+const MAPPER = {
+  tBTC: 'testnet',
+  tBCH: 'testnet',
+  BTC: 'mainnet',
+  BCH: 'mainnet',
+};
 
 class Bitcoin {
   constructor({
-    CHAIN = 'testnet',
-    USE_BCOIN = true,
-    BCOIN_URI,
-    BCOIN_APIKEY,
-    BROADCAST_BCOIN = true,
-    BROADCAST_BITCORE = false,
+    CHAIN = 'tBTC',
+    // USE_BCOIN = true,
+    URI,
+    APIKEY,
+    // BROADCAST_BCOIN = true,
+    // BROADCAST_BITCORE = false,
     bcoin,
   }) {
     this.bcoin = bcoin;
-    this.bcoin.set(CHAIN);
+    this.bcoin.set(MAPPER[CHAIN]);
     this.CHAIN = CHAIN;
-    this.BCOIN_URI = BCOIN_URI;
-    this.BCOIN_APIKEY = BCOIN_APIKEY;
-    this.USE_BCOIN = USE_BCOIN;
-    this.BROADCAST_BCOIN = BROADCAST_BCOIN;
-    this.BROADCAST_BITCORE = BROADCAST_BITCORE;
+    this.URI = URI;
+    this.APIKEY = APIKEY;
+    // this.USE_BCOIN = USE_BCOIN;
+    // this.BROADCAST_BCOIN = BROADCAST_BCOIN;
+    // this.BROADCAST_BITCORE = BROADCAST_BITCORE;
 
-    if (CHAIN === 'mainnet') {
+    if (MAPPER[CHAIN] === 'mainnet') {
       this.NETWORK = bitcoin.networks.bitcoin;
     } else {
       this.NETWORK = bitcoin.networks.testnet;
     }
-    this.insight = new Insight(CHAIN);
+    // this.insight = new Insight(CHAIN);
   }
 
   newMnemonic(seed) {
@@ -52,9 +61,21 @@ class Bitcoin {
       return false;
     }
   }
-  isInvalid(address) {
+  normalizeAddress(address) {
     try {
-      address = address.toString();
+      const decoded = cashaddr.decode(address);
+      address = this.bcoin.primitives.Address.fromHash(
+        new Buffer(decoded.hash)
+      ).toBase58();
+    } catch (err) {
+      // Ignore
+    }
+    return address;
+  }
+  isInvalid(address) {
+    address = this.normalizeAddress(address);
+    try {
+      // address = address.toString();
       const addr = this.bcoin.primitives.Address.fromBase58(address);
       if (address !== addr.toBase58()) {
         throw new Error('Invalid');
@@ -65,6 +86,7 @@ class Bitcoin {
     }
   }
   addressToHex(address) {
+    address = this.normalizeAddress(address);
     return this.bcoin.primitives.Address.fromBase58(address)
       .toRaw()
       .toString('hex');
@@ -105,12 +127,14 @@ class Bitcoin {
     const masterAlice = this.bcoin.hd.from(alice);
 
     let coinChain = 1; // Testnet default
-    if (this.CHAIN === 'mainnet') {
+    if (this.CHAIN === 'BTC') {
       coinChain = 0;
-    } else if (this.CHAIN === 'bitcoincash') {
+    } else if (this.CHAIN === 'BCH') {
       coinChain = 145;
-    } else if (this.CHAIN === 'testnet') {
+    } else if (this.CHAIN === 'tBTC') {
       coinChain = 1;
+    } else if (this.CHAIN === 'tBCH') {
+      coinChain = 145; // TODO: Testnet?
     }
 
     let toAddress;
@@ -171,6 +195,7 @@ class Bitcoin {
   }
 
   verifyMessage(message, address, signature) {
+    address = this.normalizeAddress(address);
     return bitcoinMessage.verify(message, address, signature);
   }
   signMessage(message, key) {
@@ -185,6 +210,7 @@ class Bitcoin {
     return signature.toString('base64');
   }
   getFakeUtxos({ address, txid, vout, satoshis }) {
+    address = this.normalizeAddress(address);
     const utxos = [
       {
         address,
@@ -197,16 +223,20 @@ class Bitcoin {
         coinbase: false,
         version: 1,
         hash: txid,
-        script: this.bcoin
-          .script()
-          .fromAddress(address)
-          .toJSON(),
+        script:
+          typeof this.bcoin.script === 'function' // TODO: Explicitly select: bcoin vs bcash
+            ? this.bcoin
+                .script()
+                .fromAddress(address)
+                .toJSON()
+            : new this.bcoin.script.Script().fromAddress(address).toJSON(),
         height: 1260734,
       },
     ];
     return utxos;
   }
   getUtxosBalance(utxos, address = null) {
+    address = this.normalizeAddress(address);
     let balance = 0;
     utxos.map(utxo => {
       if (typeof utxo.value !== 'undefined' && utxo.value > 0) {
@@ -262,46 +292,49 @@ class Bitcoin {
   }
 
   getUtxos(address) {
-    if (this.USE_BCOIN) {
-      return this.getUtxosBcoin(address);
-    } else {
-      return this.getUtxosBitcore(address);
-    }
+    address = this.normalizeAddress(address);
+    return this.getUtxosBcoin(address);
+    // if (this.USE_BCOIN) {
+    //   return this.getUtxosBcoin(address);
+    // } else {
+    //   return this.getUtxosBitcore(address);
+    // }
   }
 
-  getUtxosBitcore(address) {
-    return new Promise((resolve, reject) => {
-      this.insight.getUnspentUtxos(address, (err, utxos) => {
-        if (err) {
-          reject(err);
-        } else {
-          // console.log('Received utxos for', address, utxos);
-          utxos = utxos.map(utxo => {
-            const utxoObj = utxo.toObject();
-            return {
-              txid: utxoObj.txid,
-              address: utxoObj.address,
-              satoshis: utxo.satoshis,
-              index: utxoObj.vout,
-              value: utxo.satoshis,
-              coinbase: false, // TODO: Verify this?
-              version: 1,
-              hash: utxoObj.txid,
-              script: utxoObj.scriptPubKey,
-              height: 1, // TODO: Set this some how?,
-            };
-          });
-          resolve(utxos);
-        }
-      });
-    });
-  }
+  // getUtxosBitcore(address) {
+  //   return new Promise((resolve, reject) => {
+  //     this.insight.getUnspentUtxos(address, (err, utxos) => {
+  //       if (err) {
+  //         reject(err);
+  //       } else {
+  //         // console.log('Received utxos for', address, utxos);
+  //         utxos = utxos.map(utxo => {
+  //           const utxoObj = utxo.toObject();
+  //           return {
+  //             txid: utxoObj.txid,
+  //             address: utxoObj.address,
+  //             satoshis: utxo.satoshis,
+  //             index: utxoObj.vout,
+  //             value: utxo.satoshis,
+  //             coinbase: false, // TODO: Verify this?
+  //             version: 1,
+  //             hash: utxoObj.txid,
+  //             script: utxoObj.scriptPubKey,
+  //             height: 1, // TODO: Set this some how?,
+  //           };
+  //         });
+  //         resolve(utxos);
+  //       }
+  //     });
+  //   });
+  // }
   getUtxosBcoin(address) {
+    address = this.normalizeAddress(address);
     return new Promise((resolve, reject) => {
       axios({
         url: `/coin/address`,
         method: 'POST',
-        baseURL: `http://x:${this.BCOIN_APIKEY}@${this.BCOIN_URI}`,
+        baseURL: `http://x:${this.APIKEY}@${this.URI}`,
         data: {
           addresses: Array.isArray(address) ? address : [address],
         },
@@ -325,7 +358,7 @@ class Bitcoin {
       axios({
         url: `/`,
         method: 'GET',
-        baseURL: `http://x:${this.BCOIN_APIKEY}@${this.BCOIN_URI}`,
+        baseURL: `http://x:${this.APIKEY}@${this.URI}`,
       })
         .then(res => {
           resolve(res.data);
@@ -343,33 +376,33 @@ class Bitcoin {
 
     let txid1;
     let err1;
-    if (this.BROADCAST_BCOIN) {
-      try {
-        txid1 = await this.broadcastTxBcoin(serialized);
-      } catch (error) {
-        console.log('Error broadcasting bcoin', error);
-        if (typeof error === 'string') {
-          err1 = new Error(error);
-        } else {
-          err1 = error;
-        }
+    // if (this.BROADCAST_BCOIN) {
+    try {
+      txid1 = await this.broadcastTxBcoin(serialized);
+    } catch (error) {
+      console.log('Error broadcasting bcoin', error);
+      if (typeof error === 'string') {
+        err1 = new Error(error);
+      } else {
+        err1 = error;
       }
     }
+    // }
 
     let txid2;
     let err2;
-    if (this.BROADCAST_BITCORE) {
-      try {
-        txid2 = await this.broadcastTxBitcore(serialized);
-      } catch (error) {
-        console.log('Error broadcasting bitcore', error);
-        if (typeof error === 'string') {
-          err2 = new Error(error);
-        } else {
-          err2 = error;
-        }
-      }
-    }
+    // if (this.BROADCAST_BITCORE) {
+    //   try {
+    //     txid2 = await this.broadcastTxBitcore(serialized);
+    //   } catch (error) {
+    //     console.log('Error broadcasting bitcore', error);
+    //     if (typeof error === 'string') {
+    //       err2 = new Error(error);
+    //     } else {
+    //       err2 = error;
+    //     }
+    //   }
+    // }
 
     if (err2) {
       throw err2;
@@ -380,51 +413,51 @@ class Bitcoin {
     return txid1 || txid2;
   }
 
-  broadcastTxBitcore(serialized) {
-    // // Insight does not work over tor :(
-    // if (this.tor) {
-    //   console.log('Broadcasting tx over tor');
-    //   return new Promise((resolve, reject) => {
-    //     let url;
-    //     if (this.CHAIN === 'mainnet') {
-    //       url = 'https://insight.bitpay.com/api/tx/send';
-    //     } else {
-    //       url = 'https://test-insight.bitpay.com/api/tx/send';
-    //     }
-    //     this.tor.request(
-    //       url,
-    //       {
-    //         method: 'POST',
-    //         body: JSON.stringify({
-    //           rawtx: serialized,
-    //         }),
-    //         headers: {
-    //           Accept: 'application/json',
-    //           'Content-Type': 'application/json',
-    //         },
-    //       },
-    //       (err, res, body) => {
-    //         if (err || res.statusCode !== 200) {
-    //           reject(err || body);
-    //         }
-    //         return resolve(JSON.parse(body).txid);
-    //       }
-    //     );
-    //   });
-    // } else {
-    //
-    // }
-
-    return new Promise((resolve, reject) => {
-      this.insight.broadcast(serialized, (err, txid) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(txid);
-        }
-      });
-    });
-  }
+  // broadcastTxBitcore(serialized) {
+  //   // // Insight does not work over tor :(
+  //   // if (this.tor) {
+  //   //   console.log('Broadcasting tx over tor');
+  //   //   return new Promise((resolve, reject) => {
+  //   //     let url;
+  //   //     if (this.CHAIN === 'mainnet') {
+  //   //       url = 'https://insight.bitpay.com/api/tx/send';
+  //   //     } else {
+  //   //       url = 'https://test-insight.bitpay.com/api/tx/send';
+  //   //     }
+  //   //     this.tor.request(
+  //   //       url,
+  //   //       {
+  //   //         method: 'POST',
+  //   //         body: JSON.stringify({
+  //   //           rawtx: serialized,
+  //   //         }),
+  //   //         headers: {
+  //   //           Accept: 'application/json',
+  //   //           'Content-Type': 'application/json',
+  //   //         },
+  //   //       },
+  //   //       (err, res, body) => {
+  //   //         if (err || res.statusCode !== 200) {
+  //   //           reject(err || body);
+  //   //         }
+  //   //         return resolve(JSON.parse(body).txid);
+  //   //       }
+  //   //     );
+  //   //   });
+  //   // } else {
+  //   //
+  //   // }
+  //
+  //   return new Promise((resolve, reject) => {
+  //     this.insight.broadcast(serialized, (err, txid) => {
+  //       if (err) {
+  //         reject(err);
+  //       } else {
+  //         resolve(txid);
+  //       }
+  //     });
+  //   });
+  // }
 
   broadcastTxBcoin(serialized) {
     // return new Promise((resolve, reject) => {
@@ -437,7 +470,7 @@ class Bitcoin {
       axios({
         url: `/`,
         method: 'POST',
-        baseURL: `http://x:${this.BCOIN_APIKEY}@${this.BCOIN_URI}`,
+        baseURL: `http://x:${this.APIKEY}@${this.URI}`,
         data: {
           method: 'sendrawtransaction',
           params: [serialized],
@@ -459,6 +492,7 @@ class Bitcoin {
     min_pool,
   }) {
     console.log('Constructing TX...');
+    fromAddress = this.normalizeAddress(fromAddress);
 
     // Sanity check
     if (alices.length !== bobs.length) {
@@ -504,6 +538,7 @@ class Bitcoin {
     });
     utxos.map(utxo => {
       const utxoObj = utxo.toJSON();
+      utxoObj.address = this.normalizeAddress(utxoObj.address);
       if (this.isInvalid(utxoObj.address)) {
         throw new Error(`Invalid utxo address: ${utxoObj.address}`);
       }
@@ -607,6 +642,10 @@ class Bitcoin {
 
   // Client only
   verifyTransaction({ alices, bobs, fromAddress, changeAddress, toAddress }) {
+    fromAddress = this.normalizeAddress(fromAddress);
+    changeAddress = this.normalizeAddress(changeAddress);
+    toAddress = this.normalizeAddress(toAddress);
+
     // Make sure our addresses are in the pool
     let verifyAlice = false;
     let verifyBob = false;

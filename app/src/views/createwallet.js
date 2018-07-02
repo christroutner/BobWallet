@@ -16,12 +16,11 @@ class CreateWallet extends Component {
     this.state = {
       aliceSeed: '',
       bobSeed: '',
-      nextSelected: false,
       flash: null,
     };
   }
   render() {
-    const { aliceSeed, bobSeed, nextSelected, flash } = this.state;
+    const { aliceSeed, bobSeed, flash } = this.state;
     const invalidWallets = !(
       ActionsClient.isValidSeed(aliceSeed) &&
       (ActionsClient.isValidSeed(bobSeed) ||
@@ -54,7 +53,10 @@ class CreateWallet extends Component {
             style={{ flex: 1 }}
             value={aliceSeed}
             onChangeText={aliceSeed =>
-              this.setState({ nextSelected: false, flash: null, aliceSeed })
+              this.setState({
+                flash: null,
+                aliceSeed,
+              })
             }
           />
           <Button
@@ -63,7 +65,6 @@ class CreateWallet extends Component {
             color={colors.darkgray}
             onPress={() =>
               this.setState({
-                nextSelected: false,
                 flash: null,
                 aliceSeed: ActionsClient.newMnemonic(),
               })
@@ -90,7 +91,10 @@ class CreateWallet extends Component {
             style={{ flex: 1 }}
             value={bobSeed}
             onChangeText={bobSeed =>
-              this.setState({ nextSelected: false, flash: null, bobSeed })
+              this.setState({
+                flash: null,
+                bobSeed,
+              })
             }
           />
           <Button
@@ -99,7 +103,6 @@ class CreateWallet extends Component {
             color={colors.darkgray}
             onPress={() =>
               this.setState({
-                nextSelected: false,
                 flash: null,
                 bobSeed: ActionsClient.newMnemonic(),
               })
@@ -116,37 +119,28 @@ class CreateWallet extends Component {
           <Button
             color={invalidWallets ? colors.darkgray : colors.green}
             style={{ width: 140 }}
-            // disabled={
-            //   !(
-            //     ActionsClient.isValidSeed(aliceSeed) &&
-            //     (!bobSeed ||
-            //       (ActionsClient.isValidSeed(bobSeed) ||
-            //         ActionsClient.isValidXPub(bobSeed) ||
-            //         !ActionsClient.isInvalid(bobSeed)))
-            //   )
-            // }
-            // disabled={
-            //   !(
-            //     ActionsClient.isValidSeed(aliceSeed) &&
-            //     (ActionsClient.isValidSeed(bobSeed) ||
-            //       ActionsClient.isValidXPub(bobSeed) ||
-            //       !ActionsClient.isInvalid(bobSeed))
-            //   )
-            // }
-            text={!nextSelected ? 'Next' : 'Download Backup'}
+            text="Start BTC"
             onPress={() => {
               if (invalidWallets) {
                 this.setState({
                   flash: 'Please enter valid Wallets.',
                 });
               } else {
-                if (!nextSelected) {
-                  this.setState({
-                    nextSelected: true,
-                  });
-                } else {
-                  ActionsNav.goPro({ aliceSeed, bobSeed });
-                }
+                ActionsNav.goPro({ aliceSeed, bobSeed, chain: 'tBTC' });
+              }
+            }}
+          />
+          <Button
+            color={invalidWallets ? colors.darkgray : colors.green}
+            style={{ width: 140 }}
+            text="Start BCH"
+            onPress={() => {
+              if (invalidWallets) {
+                this.setState({
+                  flash: 'Please enter valid Wallets.',
+                });
+              } else {
+                ActionsNav.goPro({ aliceSeed, bobSeed, chain: 'tBCH' });
               }
             }}
           />

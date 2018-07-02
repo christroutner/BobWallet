@@ -8,5 +8,7 @@ node_modules
 yarn.lock
 /config.json
 /bcoin
+/bcash
 /bcoin_testnet
+/bcash_testnet
 /logs

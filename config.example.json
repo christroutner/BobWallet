@@ -1,18 +1,21 @@
 {
-  "USE_BCOIN": true,
   "RSA_KEY_SIZE": 1024,
   "BCOIN_URI": "localhost:18332",
   "BCOIN_APIKEY": "somepassword",
+  "BCASH_URI": "localhost:18342",
+  "BCASH_APIKEY": "somepassword",
+  "BCOIN": true,
+  "BCASH": true,
   "LOG_TO_FILE": true,
   "MIN_POOL": 2,
   "MAX_POOL": 1000,
   "SERVE_STATIC_APP": true,
-  "CHAIN": "testnet",
   "FEE_PER_INPUT": 10000,
   "OUTPUT_SAT": 100000,
   "PORT": 8081,
-  "DELAY_BETWEEN_ROUNDS": 10,
+  "DELAY_BETWEEN_ROUNDS": 15,
   "TIMEOUT": 5,
   "PRODUCTION": false,
-  "PROD_URL": "api.yourdomain.com"
+  "PROD_URL": "api.yourdomain.com",
+  "EMAIL": "youremail@example.com"
 }

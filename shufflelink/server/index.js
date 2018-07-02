@@ -1,10 +1,15 @@
 const bcoin = require('bcoin');
+const bcash = require('bcash');
 const Bitcoin = require('../dist/shufflelink/client/bitcoin_bcoin').default;
 
 // Default settings
 let CONFIG = {
   BCOIN_URI: 'localhost:18332',
   BCOIN_APIKEY: 'changeme',
+  BCASH_URI: 'localhost:18332',
+  BCASH_APIKEY: 'changeme',
+  BCOIN: true,
+  BCASH: false,
   SERVE_STATIC_APP: true,
   CHAIN: 'testnet',
   LOG_TO_FILE: false,
@@ -23,12 +28,27 @@ try {
   console.log('Could not find config.json. Using defaults');
 }
 
-const bitcoinUtils = new Bitcoin({
-  ...CONFIG,
-  bcoin,
-});
+let bitcoinUtilsCore;
+if (CONFIG.BCOIN) {
+  bitcoinUtilsCore = new Bitcoin({
+    ...CONFIG,
+    bcoin,
+  });
+}
+let bitcoinUtilsCash;
+if (CONFIG.BCASH) {
+  bitcoinUtilsCash = new Bitcoin({
+    ...CONFIG,
+    bcash,
+  });
+}
 
 const Server = require('./server');
-const server = new Server({ bitcoinUtils, CONFIG, DEBUG_TEST_MODE: false });
+const server = new Server({
+  bitcoinUtilsCore,
+  bitcoinUtilsCash,
+  CONFIG,
+  DEBUG_TEST_MODE: false,
+});
 
 console.log('Running server.');

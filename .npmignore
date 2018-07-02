@@ -7,7 +7,9 @@ hostname2
 /other
 /.github
 /bcoin
+/bcash
 /bcoin_testnet
+/bcash_testnet
 /logs
 /scripts
 /index.html

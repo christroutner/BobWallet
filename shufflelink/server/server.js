@@ -58,9 +58,15 @@ class Server extends Coordinator {
     this.io.on('connection', client => {
       const uuid = client.id;
       this.consoleLog.info('Connected: ', uuid);
-      client.on('checkBalance', async (address, callback) => {
-        const response = await this.balance({ address });
-        this.consoleLog.info('checkBalance: ', address, ', ', response.balance);
+      client.on('checkBalance', async ({ address, chain }, callback) => {
+        const response = await this.balance({ address, chain });
+        this.consoleLog.info(
+          chain,
+          ': checkBalance: ',
+          address,
+          ', ',
+          response.balance
+        );
         callback({ ...response, utxos: undefined });
       });
       client.on('disconnect', () => {

@@ -12,7 +12,7 @@ class Client {
     bobIndex = 0,
     changeIndex = 1,
 
-    CHAIN = 'testnet',
+    chain = 'tBTC',
     min_pool = 2,
     version = 'unknown',
 
@@ -21,7 +21,7 @@ class Client {
     callbackRoundComplete,
     callbackBalance,
   }) {
-    this.CHAIN = CHAIN;
+    this.chain = chain;
     this.version = version;
     this.bitcoinUtils = bitcoinUtils;
 
@@ -83,26 +83,33 @@ class Client {
     });
   }
   setRoundError(err) {
-    this.roundError = err;
-    // this.setState(CLIENT_STATES.unjoined);
-    if (this.callbackError) this.callbackError(err);
+    if (err.chain === this.chain) {
+      this.roundError = err;
+      // this.setState(CLIENT_STATES.unjoined);
+      if (this.callbackError) this.callbackError(err);
+    }
   }
   roundSuccess(response = {}) {
-    if (!response.error) {
-      // Success
-      // Increment addresses
-      this.aliceIndex = this.changeIndex;
-      this.bobIndex++;
-      this.changeIndex++;
-      this.updateKeyIndexes({ changeIndex: this.changeIndex });
-    } else if (this.roundParams.blameGame) {
-      // TODO: Increment bobIndex if round entered blame game and sent private key
-      // this.bobIndex++;
-      // this.updateKeyIndexes({ changeIndex: this.changeIndex });
+    if (response.chain === this.chain) {
+      if (!response.error) {
+        // Success
+        // Increment addresses
+        this.aliceIndex = this.changeIndex;
+        this.bobIndex++;
+        this.changeIndex++;
+        this.updateKeyIndexes({ changeIndex: this.changeIndex });
+      } else if (this.roundParams.blameGame) {
+        // TODO: Increment bobIndex if round entered blame game and sent private key
+        // this.bobIndex++;
+        // this.updateKeyIndexes({ changeIndex: this.changeIndex });
+      }
+      this.setState(CLIENT_STATES.unjoined);
+      const finalParams = this.filterFinalParameters(
+        this.roundParams,
+        response
+      );
+      if (this.callbackRoundComplete) this.callbackRoundComplete(finalParams);
     }
-    this.setState(CLIENT_STATES.unjoined);
-    const finalParams = this.filterFinalParameters(this.roundParams, response);
-    if (this.callbackRoundComplete) this.callbackRoundComplete(finalParams);
   }
   updateBalance(response) {
     if (this.callbackBalance) this.callbackBalance(response);
@@ -136,6 +143,11 @@ class Client {
 
   join(params) {
     // TODO: Decline to join if user declines parameters
+    if (params.chain !== this.chain) {
+      return {
+        error: 'Wrong chain',
+      };
+    }
     this.roundError = null; // Clear round error
     this.setState(CLIENT_STATES.joining);
     const rsaKey = Shuffle.generateKey();
@@ -144,13 +156,17 @@ class Client {
       privateKey: rsaKey.getPrivateKey(),
       keys: this.keys,
       lastUpdated: new Date().getTime(),
+      chain: this.chain,
+      version: this.version,
     });
     const {
       publicKey,
       round_id,
+      chain,
       keys: { fromAddress, changeAddress, fromPrivate },
     } = this.roundParams;
     return {
+      chain,
       version: this.version,
       fromAddress,
       changeAddress,
@@ -199,7 +215,13 @@ class Client {
         throw new Error(`Missing my public key`);
       }
       const returnOnions = [];
+      const uniqueOnions = {};
       for (const layer of onions) {
+        if (uniqueOnions[layer]) {
+          throw new Error('Duplicate onions');
+        }
+        uniqueOnions[layer] = true;
+
         const decrypted = Shuffle.decrypt(privateKey, layer);
         returnOnions.push(decrypted);
       }

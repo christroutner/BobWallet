@@ -3,7 +3,7 @@ import FileSaver from 'file-saver';
 
 export const formatSat = (amount, ticker, wholeNumber) => {
   if (typeof amount === 'undefined') {
-    return 'Unknown Amount';
+    return `Unknown Amount ${ticker}`;
   }
   const num = new BigNumber(amount.toString());
   if (wholeNumber) {

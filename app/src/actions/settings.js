@@ -9,44 +9,38 @@ class ActionsSettings {
     store.save();
   }
 
-  prepareBackup(settings) {
+  prepareBackup() {
     let string;
-    if (settings) {
-      settings.lastBackup = new Date().getTime();
-      settings.version = store.settings.version;
-      string = JSON.stringify({ settings });
-    } else {
-      store.settings.lastBackup = new Date().getTime();
-      store.save();
-      const { settings, completedRounds, addressBalances } = store;
+    store.settings.lastBackup = new Date().getTime();
+    store.save();
+    const { settings, completedRounds, addressBalances } = store;
+    try {
+      string = JSON.stringify({
+        settings,
+        completedRounds,
+        addressBalances,
+      });
+    } catch (err) {
+      console.log('Could not copy all data', err);
       try {
         string = JSON.stringify({
           settings,
-          completedRounds,
           addressBalances,
         });
       } catch (err) {
         console.log('Could not copy all data', err);
-        try {
-          string = JSON.stringify({
-            settings,
-            addressBalances,
-          });
-        } catch (err) {
-          console.log('Could not copy all data', err);
-          string = JSON.stringify({ settings });
-        }
+        string = JSON.stringify({ settings });
       }
     }
     return string;
   }
 
-  copyBackup(settings) {
-    const string = this.prepareBackup(settings);
+  copyBackup() {
+    const string = this.prepareBackup();
     Clipboard.setString(string);
   }
-  downloadBackup(settings) {
-    const string = this.prepareBackup(settings);
+  downloadBackup() {
+    const string = this.prepareBackup();
     download(string);
   }
   async setBackup(backup) {

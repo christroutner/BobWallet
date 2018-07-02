@@ -1,16 +1,15 @@
 #!/bin/bash
 
+rm -rf ./bcoin
+rm -f ./app/public/bcoin.js
+rm -f ./app/public/bcoin-worker.js
+
 git clone https://github.com/bcoin-org/bcoin.git
-
-cd bcoin
-
+cd ./bcoin
+git checkout f00ed98eead4583e6b1020dbff9c4bf2d3a527de
 npm install
-
-# https://github.com/bcoin-org/bcoin/issues/411
-
 npm run webpack-browser
-
-cp ./browser/bcoin.js ../app/public/bcoin.js
-cp ./browser/bcoin-worker.js ../app/public/bcoin-worker.js
-
 cd ..
+
+cp ./bcoin/browser/bcoin.js ./app/public/bcoin.js
+cp ./bcoin/browser/bcoin-worker.js ./app/public/bcoin-worker.js

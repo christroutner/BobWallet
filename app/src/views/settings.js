@@ -100,7 +100,7 @@ class Settings extends Component {
             }
             onPress={() => {
               if (deleteWallet) {
-                ActionsSettings.copyBackup();
+                // ActionsSettings.copyBackup();
                 ActionsSettings.downloadBackup();
                 ActionsNav.goWelcome();
                 this.flash('Copied Backup to Clipboard.');

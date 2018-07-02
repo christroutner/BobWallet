@@ -6,6 +6,7 @@ import {
   SERVER,
   DEFAULT_TICKER,
   VERSION,
+  DEFAULT_CHAIN,
 } from './config';
 
 import ComputedServer from './computed/server';
@@ -38,6 +39,7 @@ class Store {
         serverAddress: SERVER,
         wholeNumbers: true,
         ticker: DEFAULT_TICKER,
+        chain: DEFAULT_CHAIN,
 
         lastBackup: null,
         successfulRounds: 0,

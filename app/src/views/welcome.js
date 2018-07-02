@@ -36,8 +36,14 @@ class Welcome extends Component {
           <Button
             color={colors.green}
             style={{ padding: 4, minWidth: 110 }}
-            text="Start"
-            onPress={() => ActionsNav.goEasy()}
+            text="Start BTC"
+            onPress={() => ActionsNav.goEasy('tBTC')}
+          />
+          <Button
+            color={colors.green}
+            style={{ padding: 4, minWidth: 110 }}
+            text="Start BCH"
+            onPress={() => ActionsNav.goEasy('tBCH')}
           />
           <Button
             color={colors.darkgray}

@@ -1,5 +1,5 @@
 // export const VERSION = require('../package.json').version;
-export const VERSION = require('blindlink.json').version;
+export const VERSION = require('package-bobwallet.json').version;
 
 export const RETRY_DELAY = 3000;
 
@@ -25,4 +25,4 @@ export const BLOCK_EXPLORER_URL = 'https://live.blockcypher.com/btc-testnet/';
 export const GITHUB_URL = 'https://github.com/BobWallet/BobWallet';
 
 export const DEFAULT_TICKER = 'tBTC';
-export const DEFAULT_CHAIN = 'testnet';
+export const DEFAULT_CHAIN = 'tBTC';

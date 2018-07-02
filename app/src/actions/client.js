@@ -2,19 +2,21 @@ import store from '../store';
 import { observe, action } from 'mobx';
 import { DEFAULT_ROUTE, DEFAULT_TAB, DEFAULT_CHAIN, VERSION } from '../config';
 
-// import Client from '../blindlink/client';
-// import Bitcoin from '../blindlink/bitcoin_bcoin';
-// import bcoin from 'bcoin';
 import Client from '../shufflelink/network';
 import Bitcoin from '../shufflelink/bitcoin_bcoin';
-const bitcoinUtils = new Bitcoin({
-  CHAIN: DEFAULT_CHAIN,
+const bitcoinUtilsCore = new Bitcoin({
+  CHAIN: 'tBTC',
   bcoin: window.bcoin,
-  // bcoin,
 });
-
-// const Client = require('electron-rpc/client');
-// const client = new Client();
+const bitcoinUtilsCash = new Bitcoin({
+  CHAIN: 'tBCH',
+  bcoin: window.bcash,
+});
+const bitcoinUtils = bitcoinUtilsCore;
+const MAPPER = {
+  tBTC: bitcoinUtilsCore,
+  tBCH: bitcoinUtilsCash,
+};
 
 class ActionsClient {
   constructor() {
@@ -55,6 +57,7 @@ class ActionsClient {
   // }
 
   initAlice({
+    chain = DEFAULT_CHAIN,
     aliceSeed = store.settings.aliceSeed,
     bobSeed = store.settings.bobSeed,
     aliceIndex = store.settings.aliceIndex,
@@ -66,10 +69,10 @@ class ActionsClient {
     } = store;
 
     store.bobClient = new Client({
-      CHAIN: DEFAULT_CHAIN,
+      chain,
       version: VERSION,
       // DISABLE_UTXO_FETCH: true,
-      bitcoinUtils,
+      bitcoinUtils: MAPPER[chain],
       aliceSeed,
       bobSeed,
       aliceIndex,
@@ -169,6 +172,8 @@ class ActionsClient {
     store.settings.aliceIndex = store.bobClient.aliceIndex;
     store.settings.bobIndex = store.bobClient.bobIndex;
     store.settings.changeIndex = store.bobClient.changeIndex;
+    store.settings.chain = chain;
+    store.settings.ticker = chain;
     store.save();
     this.refreshAddresses();
     this.getRoundInfo();

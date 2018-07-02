@@ -2,6 +2,7 @@ import { observe } from 'mobx';
 import store from '../store';
 import ActionsClient from './client';
 import ActionsSettings from './settings';
+import { DEFAULT_CHAIN } from '../config';
 
 class ActionsNav {
   constructor() {
@@ -16,20 +17,20 @@ class ActionsNav {
     });
   }
 
-  goEasy() {
+  goEasy(chain = DEFAULT_CHAIN) {
     const aliceSeed = ActionsClient.newMnemonic();
     const bobSeed = ActionsClient.newMnemonic();
+    ActionsClient.initAlice({ aliceSeed, bobSeed, chain });
     ActionsSettings.setSimpleMode(true);
-    ActionsSettings.downloadBackup({ aliceSeed, bobSeed });
-    ActionsSettings.copyBackup({ aliceSeed, bobSeed });
-    ActionsClient.initAlice({ aliceSeed, bobSeed });
+    ActionsSettings.downloadBackup();
+    ActionsSettings.copyBackup();
     this.goHome();
   }
-  goPro({ aliceSeed, bobSeed }) {
+  goPro({ aliceSeed, bobSeed, chain = DEFAULT_CHAIN }) {
+    ActionsClient.initAlice({ aliceSeed, bobSeed, chain });
     ActionsSettings.setSimpleMode(false);
-    ActionsSettings.downloadBackup({ aliceSeed, bobSeed });
-    ActionsSettings.copyBackup({ aliceSeed, bobSeed });
-    ActionsClient.initAlice({ aliceSeed, bobSeed });
+    ActionsSettings.downloadBackup();
+    ActionsSettings.copyBackup();
     this.goHome();
     this.goJoin();
   }
