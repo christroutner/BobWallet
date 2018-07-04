@@ -1,6 +1,6 @@
 {
   "name": "ShuffleLink",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Trustless Bitcoin Privacy Wallet",
   "homepage": "https://bobwallet.github.io",
   "main": "./shufflelink/client/network.js",

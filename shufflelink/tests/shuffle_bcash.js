@@ -40,7 +40,7 @@ test('3 Test encrypt address length', async t => {
       aliceSeed: bitcoinUtils.newMnemonic(),
       bobSeed: bitcoinUtils.newMnemonic(),
     });
-    const rawAddr = bcoin.primitives.Address.fromBase58(fromAddress).toRaw();
+    const rawAddr = bcoin.primitives.Address.fromString(fromAddress).toRaw();
     t.equal(rawAddr.length, 25);
     t.equal(rawAddr.toString('hex').length, 50);
   }

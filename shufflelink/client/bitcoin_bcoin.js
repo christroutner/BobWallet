@@ -1,4 +1,3 @@
-// const Insight = require('bitcore-explorers').Insight;
 const bitcoinMessage = require('bitcoinjs-message');
 const bitcoin = require('bitcoinjs-lib');
 const axios = require('axios');
@@ -13,28 +12,21 @@ const MAPPER = {
 };
 
 class Bitcoin {
-  constructor({
-    CHAIN = 'tBTC',
-    // USE_BCOIN = true,
-    URI,
-    APIKEY,
-    // BROADCAST_BCOIN = true,
-    // BROADCAST_BITCORE = false,
-    bcoin,
-  }) {
+  constructor({ CHAIN = 'tBTC', URI, APIKEY, bcoin }) {
     this.bcoin = bcoin;
     this.bcoin.set(MAPPER[CHAIN]);
     this.CHAIN = CHAIN;
     this.URI = URI;
     this.APIKEY = APIKEY;
+    this.NETWORK = MAPPER[CHAIN];
     // this.USE_BCOIN = USE_BCOIN;
     // this.BROADCAST_BCOIN = BROADCAST_BCOIN;
     // this.BROADCAST_BITCORE = BROADCAST_BITCORE;
 
-    if (MAPPER[CHAIN] === 'mainnet') {
-      this.NETWORK = bitcoin.networks.bitcoin;
+    if (this.NETWORK === 'mainnet') {
+      this.BITCOINJS_NETWORK = bitcoin.networks.bitcoin;
     } else {
-      this.NETWORK = bitcoin.networks.testnet;
+      this.BITCOINJS_NETWORK = bitcoin.networks.testnet;
     }
     // this.insight = new Insight(CHAIN);
   }
@@ -55,7 +47,7 @@ class Bitcoin {
   isXPubValid(pubKey) {
     if (!pubKey) return false;
     try {
-      const key = this.bcoin.hd.fromBase58(pubKey);
+      const key = this.bcoin.hd.from(pubKey);
       return !!key;
     } catch (err) {
       return false;
@@ -65,7 +57,7 @@ class Bitcoin {
     try {
       const decoded = cashaddr.decode(address);
       address = this.bcoin.primitives.Address.fromHash(
-        new Buffer(decoded.hash)
+        Buffer.from(decoded.hash)
       ).toBase58();
     } catch (err) {
       // Ignore
@@ -73,11 +65,11 @@ class Bitcoin {
     return address;
   }
   isInvalid(address) {
-    address = this.normalizeAddress(address);
+    // address = this.normalizeAddress(address);
     try {
       // address = address.toString();
-      const addr = this.bcoin.primitives.Address.fromBase58(address);
-      if (address !== addr.toBase58()) {
+      const addr = this.bcoin.primitives.Address.fromString(address);
+      if (address !== addr.toString()) {
         throw new Error('Invalid');
       }
       return false;
@@ -86,14 +78,14 @@ class Bitcoin {
     }
   }
   addressToHex(address) {
-    address = this.normalizeAddress(address);
-    return this.bcoin.primitives.Address.fromBase58(address)
+    // address = this.normalizeAddress(address);
+    return this.bcoin.primitives.Address.fromString(address)
       .toRaw()
       .toString('hex');
   }
   hexToAddress(hex) {
-    const raw = new Buffer(hex, 'hex');
-    return this.bcoin.primitives.Address.fromRaw(raw).toBase58();
+    const raw = Buffer.from(hex, 'hex');
+    return this.bcoin.primitives.Address.fromRaw(raw).toString();
   }
 
   generateAddresses({
@@ -149,14 +141,14 @@ class Bitcoin {
       const toKey = masterBob.derivePath(toDerive);
       // const toKeyring = this.bcoin.keyring(toKey.privateKey);
       const toKeyring = this.bcoin.primitives.KeyRing.fromKey(toKey.privateKey);
-      toAddress = toKeyring.getAddress('base58');
+      toAddress = toKeyring.getKeyAddress('string');
       toPrivateWIF = toKeyring.getPrivateKey('base58');
     } else if (this.isXPubValid(bobSeed)) {
-      const bob = this.bcoin.hd.fromBase58(bobSeed);
+      const bob = this.bcoin.hd.from(bobSeed);
       toDerive = `m/0/${bobIndex}`;
       const toKey = bob.derivePath(toDerive);
       const toKeyring = this.bcoin.primitives.KeyRing.fromKey(toKey.publicKey);
-      toAddress = toKeyring.getAddress('base58');
+      toAddress = toKeyring.getKeyAddress('string');
     } else if (!this.isInvalid(bobSeed)) {
       toAddress = bobSeed;
     } else {
@@ -181,12 +173,12 @@ class Bitcoin {
       fromPrivateWIF,
       // toPrivate: toKeyring,
       // changePrivate: changeKeyring,
-      fromAddress: fromKeyring.getAddress('base58'),
+      fromAddress: fromKeyring.getKeyAddress('string'),
       // toAddress: toKeyring.getAddress('base58'),
       toAddress,
       toPrivateWIF,
       changePrivateWIF,
-      changeAddress: changeKeyring.getAddress('base58'),
+      changeAddress: changeKeyring.getKeyAddress('string'),
       fromDerive,
       toDerive,
       changeDerive,
@@ -200,7 +192,7 @@ class Bitcoin {
   }
   signMessage(message, key) {
     const keyWIF = key.getPrivateKey('base58');
-    const keyPair = bitcoin.ECPair.fromWIF(keyWIF, this.NETWORK);
+    const keyPair = bitcoin.ECPair.fromWIF(keyWIF, this.BITCOINJS_NETWORK);
     const privateKey = keyPair.d.toBuffer(32);
     const signature = bitcoinMessage.sign(
       message,
@@ -210,7 +202,7 @@ class Bitcoin {
     return signature.toString('base64');
   }
   getFakeUtxos({ address, txid, vout, satoshis }) {
-    address = this.normalizeAddress(address);
+    // address = this.normalizeAddress(address);
     const utxos = [
       {
         address,
@@ -236,7 +228,7 @@ class Bitcoin {
     return utxos;
   }
   getUtxosBalance(utxos, address = null) {
-    address = this.normalizeAddress(address);
+    // address = this.normalizeAddress(address);
     let balance = 0;
     utxos.map(utxo => {
       if (typeof utxo.value !== 'undefined' && utxo.value > 0) {
@@ -292,7 +284,7 @@ class Bitcoin {
   }
 
   getUtxos(address) {
-    address = this.normalizeAddress(address);
+    // address = this.normalizeAddress(address);
     return this.getUtxosBcoin(address);
     // if (this.USE_BCOIN) {
     //   return this.getUtxosBcoin(address);
@@ -492,7 +484,7 @@ class Bitcoin {
     min_pool,
   }) {
     console.log('Constructing TX...');
-    fromAddress = this.normalizeAddress(fromAddress);
+    // fromAddress = this.normalizeAddress(fromAddress);
 
     // Sanity check
     if (alices.length !== bobs.length) {
@@ -538,7 +530,7 @@ class Bitcoin {
     });
     utxos.map(utxo => {
       const utxoObj = utxo.toJSON();
-      utxoObj.address = this.normalizeAddress(utxoObj.address);
+      // utxoObj.address = this.normalizeAddress(utxoObj.address);
       if (this.isInvalid(utxoObj.address)) {
         throw new Error(`Invalid utxo address: ${utxoObj.address}`);
       }
@@ -642,9 +634,9 @@ class Bitcoin {
 
   // Client only
   verifyTransaction({ alices, bobs, fromAddress, changeAddress, toAddress }) {
-    fromAddress = this.normalizeAddress(fromAddress);
-    changeAddress = this.normalizeAddress(changeAddress);
-    toAddress = this.normalizeAddress(toAddress);
+    // fromAddress = this.normalizeAddress(fromAddress);
+    // changeAddress = this.normalizeAddress(changeAddress);
+    // toAddress = this.normalizeAddress(toAddress);
 
     // Make sure our addresses are in the pool
     let verifyAlice = false;

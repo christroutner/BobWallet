@@ -70,7 +70,7 @@ class AliceSimple extends Component {
                 Step 1:
               </TextB>
               <ComponentAddress
-                title="Send Testnet Bitcoin Here to Start"
+                title="Send Bitcoin Here to Start"
                 simpleMode={true}
                 onPressUp={() =>
                   ActionsClient.updateKeyIndexes({

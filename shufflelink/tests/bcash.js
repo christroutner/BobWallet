@@ -13,7 +13,7 @@ const xpub1 =
   'tpubDCZhmmveHwnNhYD6KdDavDmfcGgQMMWegwhNqpeb1D9CQUsGmtij5oMiHRRGWdfb4zryswnfm55YMGz7n6JjGmddr8uZp7yvbAWNhXF77iE';
 // const xpriv1 =
 //   'tprv8fsfdMtQ9a6hp5BJRyYzWp7Z3FAUC2Kk7e6bZJcHawLoZzcW9Vu8uJjr7G9iSE8KS21aX2GjeDZZReKp32kqHJ1iCreKQAaExbHgSy7DiLQ';
-const address1 = 'msyXVh4Sq9tiBcY2ghsmEhAwPaMd5DqBmi';
+const address1 = 'bchtest:qzy2sz0ktecf4ksaqlmef79ljytjar9twyrj4sed47';
 
 test('Test Mnemonic', async t => {
   // t.plan(5);
@@ -36,9 +36,19 @@ test('Test Address Generation', async t => {
     aliceSeed: seed1,
     bobSeed: seed1,
   });
-  t.equal(addresses.fromAddress, 'mpqs196EHkEhZ8ydCfihSSZx56heBdHQCV');
-  t.equal(addresses.changeAddress, 'n2yZdrCWTxuhy1tm3onNvMTiUZAcmt8jgu');
-  t.equal(addresses.toAddress, 'mxvz16ujXhxGsNJWbKvxJjEv444qYspDKL');
+  // console.log(JSON.stringify(addresses));
+  t.equal(
+    addresses.fromAddress,
+    'bchtest:qpnye83ud57dumd2dsee20s9fx9ygrxf5gyg9trqev'
+  );
+  t.equal(
+    addresses.changeAddress,
+    'bchtest:qr4k9afcdhgjcx809p4pj0jg2kdq6mfshu49agtww8'
+  );
+  t.equal(
+    addresses.toAddress,
+    'bchtest:qzlstrq9yza7xkazvamzs59t77rlwrc9f5c5htpn84'
+  );
 
   addresses = bitcoinUtils.generateAddresses({
     aliceSeed: seed1,
@@ -46,18 +56,36 @@ test('Test Address Generation', async t => {
     aliceIndex: 1,
     bobIndex: 2,
   });
-  t.equal(addresses.fromAddress, 'n2yZdrCWTxuhy1tm3onNvMTiUZAcmt8jgu');
-  t.equal(addresses.changeAddress, 'n1ygANisTfUGuijAyLNaC1FujyN4F9ePx1');
-  t.equal(addresses.toAddress, 'mpiDhwjkKcpjdTbtJ9Ed6HDE1AqQQNchuz');
+  t.equal(
+    addresses.fromAddress,
+    'bchtest:qr4k9afcdhgjcx809p4pj0jg2kdq6mfshu49agtww8'
+  );
+  t.equal(
+    addresses.changeAddress,
+    'bchtest:qrs8q3awx0kz5l80slt39pdaflrf3pathv0xyx3j49'
+  );
+  t.equal(
+    addresses.toAddress,
+    'bchtest:qpjd4y4973n80c9am77se4eg0kelcx69658g3kqtcg'
+  );
 
   addresses = bitcoinUtils.generateAddresses({
     aliceSeed: seed1,
     bobSeed: seed2,
     aliceIndex: 4,
   });
-  t.equal(addresses.fromAddress, 'mfsHhesJ59kYKR4ukAXCeZUk5ncVBNhZnG');
-  t.equal(addresses.changeAddress, 'mqLTjkAA9WbxGijnA52kHLuZhvgLuJon1A');
-  t.equal(addresses.toAddress, 'mtMJm49wdFsPxnV7r12c15LPmtnBG3jPSA');
+  t.equal(
+    addresses.fromAddress,
+    'bchtest:qqpa3p8stddc9ffcx0lwfgmdymzeqx8qjqah7s86j3'
+  );
+  t.equal(
+    addresses.changeAddress,
+    'bchtest:qp4m2s5w6lrj2g3faqmg3l6e7p3g4a0m9y0rugrdzy'
+  );
+  t.equal(
+    addresses.toAddress,
+    'bchtest:qzxvdre3qdtc8a0j3v3shepjrrtmx8g6eg2lxhfe2v'
+  );
 
   addresses = bitcoinUtils.generateAddresses({
     aliceSeed: seed1,
@@ -65,9 +93,18 @@ test('Test Address Generation', async t => {
     aliceIndex: 0,
     bobIndex: 2,
   });
-  t.equal(addresses.fromAddress, 'mpqs196EHkEhZ8ydCfihSSZx56heBdHQCV');
-  t.equal(addresses.changeAddress, 'n2yZdrCWTxuhy1tm3onNvMTiUZAcmt8jgu');
-  t.equal(addresses.toAddress, 'mt5ZHj9fs3fKLmSfCWVHowfJCJZ1WUjZdd');
+  t.equal(
+    addresses.fromAddress,
+    'bchtest:qpnye83ud57dumd2dsee20s9fx9ygrxf5gyg9trqev'
+  );
+  t.equal(
+    addresses.changeAddress,
+    'bchtest:qr4k9afcdhgjcx809p4pj0jg2kdq6mfshu49agtww8'
+  );
+  t.equal(
+    addresses.toAddress,
+    'bchtest:qzyuczp374qz3e6gtyjjcml27sedykwn9uwnmn5wmz'
+  );
 
   addresses = bitcoinUtils.generateAddresses({
     aliceSeed: seed1,
@@ -75,24 +112,42 @@ test('Test Address Generation', async t => {
     aliceIndex: 0,
     bobIndex: 0,
   });
-  t.equal(addresses.fromAddress, 'mpqs196EHkEhZ8ydCfihSSZx56heBdHQCV');
-  t.equal(addresses.changeAddress, 'n2yZdrCWTxuhy1tm3onNvMTiUZAcmt8jgu');
-  t.equal(addresses.toAddress, 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b');
+  t.equal(
+    addresses.fromAddress,
+    'bchtest:qpnye83ud57dumd2dsee20s9fx9ygrxf5gyg9trqev'
+  );
+  t.equal(
+    addresses.changeAddress,
+    'bchtest:qr4k9afcdhgjcx809p4pj0jg2kdq6mfshu49agtww8'
+  );
+  t.equal(
+    addresses.toAddress,
+    'bchtest:qrxuaj6eu5csx8xxfypspewtuwr32xxmdv6t5c9ayp'
+  );
 
   addresses = bitcoinUtils.generateAddresses({
     aliceSeed: seed1,
     bobSeed: xpub1,
     bobIndex: 3,
   });
-  t.equal(addresses.toAddress, 'mtPCAA4GgDfhduFrmg4kkRAam6VCQUx76h');
+  t.equal(
+    addresses.toAddress,
+    'bchtest:qzxjrct9zamxyyr3w972ezpccvr3v47z9gx45ejpt6'
+  );
 
   addresses = bitcoinUtils.generateAddresses({
     aliceSeed: seed1,
     bobSeed: seed1,
     changeIndex: 6,
   });
-  t.equal(addresses.fromAddress, 'mpqs196EHkEhZ8ydCfihSSZx56heBdHQCV');
-  t.equal(addresses.changeAddress, 'n2CYTZft2fLUQW8Bfv5xvd9ws33ySghCtQ');
+  t.equal(
+    addresses.fromAddress,
+    'bchtest:qpnye83ud57dumd2dsee20s9fx9ygrxf5gyg9trqev'
+  );
+  t.equal(
+    addresses.changeAddress,
+    'bchtest:qr3d7sdlscwequ6wf3lvwlpqkvmn9527su7jthj90q'
+  );
 
   addresses = bitcoinUtils.generateAddresses({
     aliceSeed: seed1,
@@ -100,14 +155,23 @@ test('Test Address Generation', async t => {
     aliceIndex: 1,
     changeIndex: 1,
   });
-  t.equal(addresses.fromAddress, 'n2yZdrCWTxuhy1tm3onNvMTiUZAcmt8jgu');
-  t.equal(addresses.changeAddress, 'n2yZdrCWTxuhy1tm3onNvMTiUZAcmt8jgu');
+  t.equal(
+    addresses.fromAddress,
+    'bchtest:qr4k9afcdhgjcx809p4pj0jg2kdq6mfshu49agtww8'
+  );
+  t.equal(
+    addresses.changeAddress,
+    'bchtest:qr4k9afcdhgjcx809p4pj0jg2kdq6mfshu49agtww8'
+  );
 
   addresses = bitcoinUtils.generateAddresses({
     aliceSeed: seed1,
     bobSeed: address1,
   });
-  t.equal(addresses.toAddress, 'msyXVh4Sq9tiBcY2ghsmEhAwPaMd5DqBmi');
+  t.equal(
+    addresses.toAddress,
+    'bchtest:qzy2sz0ktecf4ksaqlmef79ljytjar9twyrj4sed47'
+  );
 
   t.end();
 });
@@ -137,26 +201,30 @@ test('Test Address Signing', async t => {
 
 test('Test Address validation', async t => {
   // t.plan(5);
-  t.false(bitcoinUtils.isInvalid('mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b'));
+  t.false(
+    bitcoinUtils.isInvalid('bchtest:qrxuaj6eu5csx8xxfypspewtuwr32xxmdv6t5c9ayp')
+  );
   t.true(bitcoinUtils.isInvalid('invalidAddress'));
-  t.true(bitcoinUtils.isInvalid('mzHAYhfXarPxxxkZkUDdGgYUFRmnts4m8b'));
+  t.true(
+    bitcoinUtils.isInvalid('bchtest:qrxuaj6eu5csx8xxfypspewtuwr32xxmdv6t5c9ayG')
+  );
 
   t.end();
 });
 
-test('Test Create Transaction', async t => {
-  // t.plan(5);
-  // bitcoinUtils.createTransaction({
-  //
-  // })
-
-  t.end();
-});
+// test('Test Create Transaction', async t => {
+//   // t.plan(5);
+//   // bitcoinUtils.createTransaction({
+//   //
+//   // })
+//
+//   t.end();
+// });
 
 test('Test validateUtxo', async t => {
   t.plan(2);
   const utxo = bitcoinUtils.getFakeUtxos({
-    address: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+    address: 'bchtest:qzlz220tj050v2wx4txrncwp057lc8a0jy7er4yec8',
     txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
     vout: 1,
     satoshis: 124000000,
@@ -174,19 +242,19 @@ test('Test compareUtxoSets', async t => {
   t.plan(15);
   let utxos1 = [
     ...bitcoinUtils.getFakeUtxos({
-      address: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+      address: 'bchtest:qzlz220tj050v2wx4txrncwp057lc8a0jy7er4yec8',
       txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
       vout: 1,
       satoshis: 124000000,
     }),
     ...bitcoinUtils.getFakeUtxos({
-      address: 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b',
+      address: 'bchtest:qrxuaj6eu5csx8xxfypspewtuwr32xxmdv6t5c9ayp',
       txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de41',
       vout: 1,
       satoshis: 124000000,
     }),
     ...bitcoinUtils.getFakeUtxos({
-      address: 'myBc8uZJeyc5wo987cSvUa5n1HbTdpXj7i',
+      address: 'bchtest:qrqunz94lkkz2sfstwkjqcjawh94f83z5y9vft30xa',
       txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de42',
       vout: 1,
       satoshis: 124000000,
@@ -200,7 +268,7 @@ test('Test compareUtxoSets', async t => {
     0,
     1,
     ...bitcoinUtils.getFakeUtxos({
-      address: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+      address: 'bchtest:qzlz220tj050v2wx4txrncwp057lc8a0jy7er4yec8',
       txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de43',
       vout: 1,
       satoshis: 124000000,
@@ -211,7 +279,7 @@ test('Test compareUtxoSets', async t => {
   } catch (err) {
     t.equal(err.message, 'Utxo change');
     t.equal(err.data.length, 1);
-    t.equal(err.data[0], 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV');
+    t.equal(err.data[0], 'bchtest:qzlz220tj050v2wx4txrncwp057lc8a0jy7er4yec8');
   }
 
   // Missing utxo
@@ -221,28 +289,28 @@ test('Test compareUtxoSets', async t => {
   } catch (err) {
     t.equal(err.message, 'Utxo change');
     t.equal(err.data.length, 1);
-    t.equal(err.data[0], 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV');
+    t.equal(err.data[0], 'bchtest:qzlz220tj050v2wx4txrncwp057lc8a0jy7er4yec8');
   }
   try {
     bitcoinUtils.compareUtxoSets(utxos1, []);
   } catch (err) {
     t.equal(err.message, 'Utxo change');
     t.equal(err.data.length, 3);
-    t.equal(err.data[0], 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV');
-    t.equal(err.data[1], 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b');
-    t.equal(err.data[2], 'myBc8uZJeyc5wo987cSvUa5n1HbTdpXj7i');
+    t.equal(err.data[0], 'bchtest:qzlz220tj050v2wx4txrncwp057lc8a0jy7er4yec8');
+    t.equal(err.data[1], 'bchtest:qrxuaj6eu5csx8xxfypspewtuwr32xxmdv6t5c9ayp');
+    t.equal(err.data[2], 'bchtest:qrqunz94lkkz2sfstwkjqcjawh94f83z5y9vft30xa');
   }
 
   // Utxo has different txid
   utxos1 = [
     ...bitcoinUtils.getFakeUtxos({
-      address: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+      address: 'bchtest:qzlz220tj050v2wx4txrncwp057lc8a0jy7er4yec8',
       txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
       vout: 1,
       satoshis: 124000000,
     }),
     ...bitcoinUtils.getFakeUtxos({
-      address: 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b',
+      address: 'bchtest:qrxuaj6eu5csx8xxfypspewtuwr32xxmdv6t5c9ayp',
       txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
       vout: 1,
       satoshis: 124000000,
@@ -253,7 +321,7 @@ test('Test compareUtxoSets', async t => {
     0,
     1,
     ...bitcoinUtils.getFakeUtxos({
-      address: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+      address: 'bchtest:qzlz220tj050v2wx4txrncwp057lc8a0jy7er4yec8',
       txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de41',
       vout: 1,
       satoshis: 124000000,
@@ -264,7 +332,7 @@ test('Test compareUtxoSets', async t => {
   } catch (err) {
     t.equal(err.message, 'Utxo change');
     t.equal(err.data.length, 1);
-    t.equal(err.data[0], 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV');
+    t.equal(err.data[0], 'bchtest:qzlz220tj050v2wx4txrncwp057lc8a0jy7er4yec8');
   }
 
   t.end();
@@ -272,7 +340,7 @@ test('Test compareUtxoSets', async t => {
 
 test('Test address to hex', async t => {
   t.plan(1);
-  const addr = 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV';
+  const addr = 'bchtest:qzlz220tj050v2wx4txrncwp057lc8a0jy7er4yec8';
   const hex = bitcoinUtils.addressToHex(addr);
   const address = bitcoinUtils.hexToAddress(hex);
   t.equal(addr, address);

@@ -61,7 +61,7 @@ class ComponentAddress extends Component {
                 flashMessage('Copied Address');
               }}
               style={{
-                width: 335,
+                // width: 335,
                 borderWidth: 1,
                 borderColor: colors.darkgray,
                 shadowRadius: 4,

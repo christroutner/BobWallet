@@ -26,7 +26,8 @@ export const TESTNET_FAUCET_URL = {
 };
 export const BLOCK_EXPLORER_URL = {
   tBTC: 'https://live.blockcypher.com/btc-testnet/',
-  tBCH: 'https://test-bch-insight.bitpay.com/',
+  // tBCH: 'https://test-bch-insight.bitpay.com/',
+  tBCH: 'https://www.blocktrail.com/tBCC/',
 };
 export const GITHUB_URL = 'https://github.com/BobWallet/BobWallet';
 
