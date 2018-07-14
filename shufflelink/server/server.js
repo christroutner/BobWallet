@@ -13,11 +13,20 @@ class Server extends Coordinator {
       CONFIG: { SERVE_STATIC_APP, PRODUCTION, EMAIL, PROD_URL, PORT, TIMEOUT },
     } = params;
 
-    if (SERVE_STATIC_APP) {
-      app.use(cors());
-      app.use(compression());
-      app.use(bodyParser.json());
+    app.use(cors());
+    app.use(compression());
+    app.use(bodyParser.json());
 
+    app.post('/txdrop', async (req, res) => {
+      try {
+        this.consoleLog.info('/txdrop', req.body);
+        res.send(await this.broadcastTx(req.body));
+      } catch (err) {
+        res.send({ error: err.message });
+      }
+    });
+
+    if (SERVE_STATIC_APP) {
       app.get('/', (req, res) => {
         res.sendFile(path.join(__dirname, '../../bobwallet.html'), err => {
           !err && this.consoleLog.info('Sent index.html');
@@ -96,7 +105,7 @@ class Server extends Coordinator {
         blame: genFunc('blame'),
         roundSuccess: genFunc('roundSuccess'),
         roundError: genFunc('roundError'),
-        // balance: genFunc('balance'),
+        balance: genFunc('balance'),
       });
     });
 

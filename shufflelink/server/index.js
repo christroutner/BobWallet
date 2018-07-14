@@ -53,6 +53,7 @@ const server = new Server({
   bitcoinUtilsCash,
   CONFIG,
   DEBUG_TEST_MODE: false,
+  AUTO_START: true,
 });
 
-console.log('Running server.');
+console.log('Running server.', server.CONFIG);

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-rm -rf ./app/node_modules
+rm -rf ./bob/node_modules
 
-cd ./app
+cd ./bob
 npm install
 npm run build
 cd ..

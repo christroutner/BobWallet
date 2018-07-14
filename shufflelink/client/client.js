@@ -14,6 +14,7 @@ class Client {
 
     chain = 'tBTC',
     min_pool = 2,
+    max_fees = 10000,
     version = 'unknown',
 
     callbackStateChange,
@@ -30,17 +31,22 @@ class Client {
     this.callbackRoundComplete = callbackRoundComplete;
     this.callbackBalance = callbackBalance;
 
-    this.aliceSeed = aliceSeed || this.bitcoinUtils.newMnemonic();
-    this.bobSeed = bobSeed || this.aliceSeed;
+    if (!aliceSeed || !bobSeed) {
+      throw new Error('Missing wallet seeds');
+    }
+
+    this.aliceSeed = aliceSeed;
+    this.bobSeed = bobSeed;
     this.aliceIndex = aliceIndex;
     this.bobIndex = bobIndex;
     this.changeIndex = changeIndex;
 
     this.min_pool = min_pool;
+    this.max_fees = max_fees;
     this.roundProgress = 0;
     this.roundError = null;
     this.roundState = CLIENT_STATES.unjoined;
-    this.updateKeyIndexes({});
+    this.updateKeyIndexes({ aliceIndex, bobIndex, changeIndex });
   }
   setState(state) {
     if (state === this.roundState) return; // Ignore
@@ -58,32 +64,33 @@ class Client {
     bobIndex = this.bobIndex,
     changeIndex,
   }) {
-    const { aliceSeed, bobSeed } = this;
     this.aliceIndex = aliceIndex === '' ? 0 : aliceIndex;
     this.bobIndex = bobIndex === '' ? 0 : bobIndex;
     this.keys = this.bitcoinUtils.generateAddresses({
-      aliceSeed,
-      bobSeed,
+      aliceSeed: this.aliceSeed,
+      bobSeed: this.bobSeed,
       aliceIndex: this.aliceIndex,
       bobIndex: this.bobIndex,
       changeIndex: changeIndex === '' ? 0 : changeIndex,
     });
-    // this.roundParams = Object.assign({}, this.roundParams, this.keys);
     this.changeIndex = this.keys.changeIndex;
   }
   getAddresses() {
-    return this.keys;
+    return Object.assign({}, this.keys, {
+      fromPrivate: undefined,
+      toPrivate: undefined,
+    });
   }
   getRoundInfo() {
     const { roundError, roundProgress, roundParams } = this;
-    return Object.assign({}, roundParams, {
+    return Object.assign({}, this.getAddresses(), roundParams, {
       roundError,
       progress: roundProgress,
       currentState: this.getState(),
     });
   }
   setRoundError(err) {
-    if (err.chain === this.chain) {
+    if (!err || err.chain === this.chain) {
       this.roundError = err;
       // this.setState(CLIENT_STATES.unjoined);
       if (this.callbackError) this.callbackError(err);
@@ -94,9 +101,13 @@ class Client {
       if (!response.error) {
         // Success
         // Increment addresses
-        this.aliceIndex = this.changeIndex;
+
+        if (this.aliceIndex !== this.changeIndex) {
+          this.aliceIndex = this.changeIndex;
+          this.changeIndex++;
+        }
         this.bobIndex++;
-        this.changeIndex++;
+
         this.updateKeyIndexes({ changeIndex: this.changeIndex });
       } else if (this.roundParams.blameGame) {
         // TODO: Increment bobIndex if round entered blame game and sent private key
@@ -116,12 +127,13 @@ class Client {
   }
   filterFinalParameters(
     {
-      keys: { toAddress, fromAddress, changeAddress },
+      keys: { toAddress, fromAddress, changeAddress, bobIndex },
       denomination,
       totalChange,
       totalFees,
       bobs,
       blameGame,
+      index,
     },
     { txid, serialized, error }
   ) {
@@ -136,19 +148,23 @@ class Client {
       fees: totalFees,
       serialized,
       bobs,
+      index,
       txid,
+      bobIndex,
       date: new Date().getTime(),
     };
   }
 
   join(params) {
     // TODO: Decline to join if user declines parameters
-    if (params.chain !== this.chain) {
-      return {
-        error: 'Wrong chain',
-      };
+    const chain = this.chain;
+    if (params.chain !== chain) {
+      return { error: 'Wrong chain', chain };
     }
-    this.roundError = null; // Clear round error
+    if (params.fees > this.max_fees) {
+      return { error: 'Fees are too high', chain };
+    }
+    this.setRoundError(); // Clear round error
     this.setState(CLIENT_STATES.joining);
     const rsaKey = Shuffle.generateKey();
     this.roundParams = Object.assign({}, params, {
@@ -156,18 +172,18 @@ class Client {
       privateKey: rsaKey.getPrivateKey(),
       keys: this.keys,
       lastUpdated: new Date().getTime(),
-      chain: this.chain,
+      chain,
       version: this.version,
     });
     const {
       publicKey,
       round_id,
-      chain,
+      version,
       keys: { fromAddress, changeAddress, fromPrivate },
     } = this.roundParams;
     return {
       chain,
-      version: this.version,
+      version,
       fromAddress,
       changeAddress,
       publicKey,
@@ -280,8 +296,10 @@ class Client {
       });
       const {
         tx,
+        // serialized,
         totalChange,
         totalFees,
+        index,
       } = this.bitcoinUtils.createTransaction({
         alices,
         bobs,
@@ -290,11 +308,13 @@ class Client {
         denomination,
         key: fromPrivate,
         fromAddress,
+        toAddress,
         min_pool: this.min_pool,
       });
       this.roundParams.totalChange = totalChange;
       this.roundParams.totalFees = totalFees;
       this.roundParams.bobs = bobs.length;
+      this.roundParams.index = index;
       return { tx };
     } catch (err) {
       console.log('ERROR', err);

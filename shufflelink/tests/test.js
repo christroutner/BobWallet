@@ -49,9 +49,12 @@ test('1 Test socket.io', async t => {
     console.log('Creating clients...');
     let Clients = [];
     for (let i = 0; i < NUM_OF_USERS; i++) {
+      const seed = bitcoinUtils[chain].newMnemonic();
       const client = new Network({
         chain,
         version,
+        aliceSeed: seed,
+        bobSeed: seed,
         bitcoinUtils: bitcoinUtils[chain],
         serverAddress: `http://localhost:${CONFIG.PORT}`,
         callbackBalance: response => {
@@ -63,7 +66,9 @@ test('1 Test socket.io', async t => {
         },
         callbackError: response => {
           console.log('callbackError', response);
-          t.throws(new Error(response.error));
+          if (response) {
+            t.throws(new Error('Should not happen'));
+          }
         },
         callbackStateChange: response => {
           console.log('callbackStateChange', response);
@@ -101,9 +106,12 @@ test('2 Test timeout', async t => {
     console.log('Creating clients...');
     let Clients = [];
     for (let i = 0; i < NUM_OF_USERS; i++) {
+      const seed = bitcoinUtils[chain].newMnemonic();
       const client = new Network({
         chain,
         version,
+        aliceSeed: seed,
+        bobSeed: seed,
         bitcoinUtils: bitcoinUtils[chain],
         serverAddress: `http://localhost:${CONFIG.PORT}`,
         callbackBalance: response => {
@@ -116,7 +124,9 @@ test('2 Test timeout', async t => {
         callbackError: response => {
           console.log(i, 'callbackError', response);
           // t.throws(new Error(response.error));
-          t.equal(response.error, 'Round failed at state: shuffling');
+          if (response) {
+            t.equal(response.error, 'Round failed at state: shuffling');
+          }
         },
         callbackStateChange: response => {
           console.log(i, 'callbackStateChange', response);
@@ -156,9 +166,12 @@ test('3 Test min_pool server', async t => {
     console.log('Creating clients...');
     let Clients = [];
     for (let i = 0; i < NUM_OF_USERS; i++) {
+      const seed = bitcoinUtils[chain].newMnemonic();
       const client = new Network({
         chain,
         version,
+        aliceSeed: seed,
+        bobSeed: seed,
         min_pool: NUM_OF_USERS + 1,
         bitcoinUtils: bitcoinUtils[chain],
         serverAddress: `http://localhost:${CONFIG.PORT}`,
@@ -201,9 +214,12 @@ test('4 Test min_pool client', async t => {
     console.log('Creating clients...');
     let Clients = [];
     for (let i = 0; i < NUM_OF_USERS; i++) {
+      const seed = bitcoinUtils[chain].newMnemonic();
       const client = new Network({
         chain,
         version,
+        aliceSeed: seed,
+        bobSeed: seed,
         bitcoinUtils: bitcoinUtils[chain],
         serverAddress: `http://localhost:${CONFIG.PORT}`,
         callbackBalance: response => {
@@ -251,9 +267,12 @@ test('5 Test blame game shuffling', async t => {
     const BAD_USER = 5;
     let Clients = [];
     for (let i = 0; i < NUM_OF_USERS; i++) {
+      const seed = bitcoinUtils[chain].newMnemonic();
       const client = new Network({
         chain,
         version,
+        aliceSeed: seed,
+        bobSeed: seed,
         bitcoinUtils: bitcoinUtils[chain],
         serverAddress: `http://localhost:${CONFIG.PORT}`,
       });
@@ -298,9 +317,12 @@ test('6 Test blame game shuffle duplicate onions', async t => {
     const BAD_USER = 5;
     let Clients = [];
     for (let i = 0; i < NUM_OF_USERS; i++) {
+      const seed = bitcoinUtils[chain].newMnemonic();
       const client = new Network({
         chain,
         version,
+        aliceSeed: seed,
+        bobSeed: seed,
         bitcoinUtils: bitcoinUtils[chain],
         serverAddress: `http://localhost:${CONFIG.PORT}`,
       });
@@ -348,9 +370,12 @@ test('7 Test blame game shuffle invalid onions', async t => {
     const BAD_USER = 2;
     let Clients = [];
     for (let i = 0; i < NUM_OF_USERS; i++) {
+      const seed = bitcoinUtils[chain].newMnemonic();
       const client = new Network({
         chain,
         version,
+        aliceSeed: seed,
+        bobSeed: seed,
         bitcoinUtils: bitcoinUtils[chain],
         serverAddress: `http://localhost:${CONFIG.PORT}`,
       });
@@ -401,9 +426,12 @@ test('8 Test not signing tx', async t => {
     const BAD_USER = 2;
     let Clients = [];
     for (let i = 0; i < NUM_OF_USERS; i++) {
+      const seed = bitcoinUtils[chain].newMnemonic();
       const client = new Network({
         chain,
         version,
+        aliceSeed: seed,
+        bobSeed: seed,
         bitcoinUtils: bitcoinUtils[chain],
         serverAddress: `http://localhost:${CONFIG.PORT}`,
       });

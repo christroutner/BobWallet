@@ -145,11 +145,75 @@ test('Test Address validation', async t => {
 });
 
 test('Test Create Transaction', async t => {
-  // t.plan(5);
-  // bitcoinUtils.createTransaction({
-  //
-  // })
+  t.plan(2);
+  const { tx, index } = bitcoinUtils.createTransaction({
+    alices: [
+      {
+        fromAddress: 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b',
+        changeAddress: 'n4TDSqnvck8BtsGgTzTg5sdzqe8ByzyYt2',
+      },
+    ],
+    bobs: [
+      {
+        toAddress: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+      },
+    ],
+    utxos: bitcoinUtils.getFakeUtxos({
+      address: 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b',
+      txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
+      vout: 1,
+      satoshis: 124000000,
+    }),
+    fees: 1000,
+    denomination: 10000,
+    fromAddress: 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b',
+    toAddress: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+    min_pool: 1,
+  });
+  t.equal(index, 0);
+  t.equal(
+    tx.hash,
+    'a12e7f84f95636e37a902c4303e1bb840853212edde522477d1763a3a4dc48d9'
+  );
+  t.end();
+});
 
+test('Test Create Change Dust Transaction', async t => {
+  t.plan(4);
+  const {
+    totalChange,
+    totalFees,
+    index,
+    changeIndex,
+  } = bitcoinUtils.createTransaction({
+    alices: [
+      {
+        fromAddress: 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b',
+        changeAddress: 'n4TDSqnvck8BtsGgTzTg5sdzqe8ByzyYt2',
+      },
+    ],
+    bobs: [
+      {
+        toAddress: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+      },
+    ],
+    utxos: bitcoinUtils.getFakeUtxos({
+      address: 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b',
+      txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
+      vout: 1,
+      satoshis: bitcoinUtils.DUST_LIMIT + 3,
+    }),
+    fees: 1,
+    denomination: bitcoinUtils.DUST_LIMIT + 1,
+    fromAddress: 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b',
+    toAddress: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
+    changeAddress: 'n4TDSqnvck8BtsGgTzTg5sdzqe8ByzyYt2',
+    min_pool: 1,
+  });
+  t.equal(totalFees, 2);
+  t.equal(totalChange, 0);
+  t.equal(changeIndex, -1);
+  t.equal(index, 0);
   t.end();
 });
 
@@ -286,3 +350,11 @@ test('Test cashaddr normalize', async t => {
   t.equal(address, 'mn55RMMwpgKedHD8VuoQtY5nTcGvcXtvyH');
   t.end();
 });
+
+// test.only('Tx validator', async t => {
+//   t.plan(1);
+//   const tx =
+//     '01000000012270713b2b3f72482d47485a74da32417b5853aae2d031f9ce24c848095945ba000000006a4730440220632811280edc837a09eade40b98164c6d1a57512d286a34c88765803174a8a6c02207039468d2f86416e5f0239ec4dae2979d438985f320e98aa77b3e15d780cd8b1412102e7709f16ab3406bd6f4784a326e713e653c80b8a6fce99c782f03fbe702de4ddffffffff01905f0100000000001976a91451702d8fc8ee0e7059050eb147f4a5a318d4234d88ac00000000';
+//   t.equal(bitcoinUtils.validateTx(tx), true);
+//   t.end();
+// });

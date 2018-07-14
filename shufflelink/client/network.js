@@ -4,6 +4,7 @@ const normalizeUrl = require('normalize-url');
 const CLIENT_STATES = require('./client_states');
 
 const DEFAULT_URL = 'http://localhost:8081';
+const DEBUG = true;
 
 class Network extends Client {
   constructor(params) {
@@ -12,17 +13,25 @@ class Network extends Client {
   }
   checkBalance(address = this.keys.fromAddress) {
     if (this.isConnected && this.socket) {
-      return new Promise(resolve => {
-        this.socket.emit(
-          'checkBalance',
-          { address, chain: this.chain },
-          balance => {
-            this.updateBalance(balance);
-            resolve(balance);
-          }
-        );
-      });
+      this.socket.emit(
+        'checkBalance',
+        { address, chain: this.chain },
+        balance => {
+          this.updateBalance(balance);
+        }
+      );
     }
+  }
+  async broadcastTx(tx) {
+    const res = await fetch(`${this.serverAddress}/txdrop`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ tx, chain: this.chain }),
+    });
+    return res.json();
   }
   connect() {
     return new Promise(resolve => {
@@ -33,35 +42,35 @@ class Network extends Client {
         // path: '/myownpath'
       });
       this.socket.on('join', (params, cb) => {
-        console.log('join', params);
+        DEBUG && console.log('join', params);
         cb(this.join(params));
       });
       this.socket.on('shuffle', async (params, cb) => {
-        console.log('shuffle');
+        DEBUG && console.log('shuffle');
         cb(await this.shuffle(params));
       });
       this.socket.on('sign', (params, cb) => {
-        console.log('sign');
+        DEBUG && console.log('sign');
         cb(this.sign(params));
       });
       this.socket.on('blame', (params, cb) => {
-        console.log('blame');
+        DEBUG && console.log('blame');
         cb(this.blame(params));
       });
       this.socket.on('roundSuccess', (params, cb) => {
-        console.log('roundSuccess');
+        DEBUG && console.log('roundSuccess');
         cb(this.roundSuccess(params));
       });
       this.socket.on('roundError', (params, cb) => {
-        console.log('roundError');
+        DEBUG && console.log('roundError', params);
         cb(this.setRoundError(params));
       });
       this.socket.on('balance', (params, cb) => {
-        console.log('balance');
+        DEBUG && console.log('balance');
         cb(this.updateBalance(params));
       });
       this.socket.on('connect', () => {
-        console.log('Client Connected');
+        DEBUG && console.log('Client Connected');
         if (!usedPromise) {
           usedPromise = true;
           resolve();
@@ -71,7 +80,7 @@ class Network extends Client {
         this.checkBalance();
       });
       this.socket.on('disconnect', () => {
-        console.log('Client Disconnected');
+        DEBUG && console.log('Client Disconnected');
         this.disconnected();
       });
       this.socket.connect();

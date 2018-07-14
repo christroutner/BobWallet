@@ -1,8 +1,8 @@
 #!/bin/bash
 
 rm -rf ./bcash
-rm -f ./app/public/bcash.js
-rm -f ./app/public/bcash-worker.js
+rm -f ./bob/public/bcash.js
+rm -f ./bob/public/bcash-worker.js
 
 git clone https://github.com/bcoin-org/bcash.git
 cd ./bcash
@@ -11,5 +11,5 @@ npm install
 npm run webpack-browser
 cd ..
 
-cp ./bcash/browser/bcash.js ./app/public/bcash.js
-cp ./bcash/browser/bcash-worker.js ./app/public/bcash-worker.js
+cp ./bcash/browser/bcash.js ./bob/public/bcash.js
+cp ./bcash/browser/bcash-worker.js ./bob/public/bcash-worker.js

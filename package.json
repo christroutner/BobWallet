@@ -1,6 +1,6 @@
 {
   "name": "ShuffleLink",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Trustless Bitcoin Privacy Wallet",
   "homepage": "https://bobwallet.github.io",
   "main": "./shufflelink/client/network.js",
@@ -11,13 +11,13 @@
     "server": "npm install && npm run babel && node ./shufflelink/server/index.js",
     "test": "npm run babel && tape ./shufflelink/tests/*.js",
     "babel": "babel ./shufflelink/client/*.js --presets babel-preset-es2015 --out-dir ./shufflelink/dist/",
-    "prettier": "prettier --write --single-quote --trailing-comma es5 app/src/*.js app/src/**/*.js shufflelink/**/*.js *.{json,md}",
-    "lint": "node_modules/.bin/eslint shufflelink app/src",
+    "prettier": "prettier --write --single-quote --trailing-comma es5 bob/src/*.js bob/src/**/*.js shufflelink/**/*.js *.{json,md}",
+    "lint": "node_modules/.bin/eslint shufflelink bob/src",
     "build": "docker run -it --rm -v $(pwd):/bob -w=/bob amd64/node:10.5.0 bash ./scripts/build",
     "build-app": "docker run -it --rm -v $(pwd):/bob -w=/bob amd64/node:10.5.0 bash ./scripts/build_app",
     "build-local": "bash ./scripts/build",
-    "dev": "cd app && npm install && npm start",
-    "copy": "cd app && npm run copy"
+    "dev": "cd bob && npm install && npm start",
+    "copy": "cd bob && npm run copy"
   },
   "author": "Bob (bobwallet@protonmail.com)",
   "license": "MIT",

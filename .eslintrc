@@ -19,7 +19,9 @@
     "window": true,
     "document": true,
     "navigator": true,
-    "URL": true
+    "URL": true,
+    "FileReader": true,
+    "alert": true
   },
   "env": {
     "es6": true,

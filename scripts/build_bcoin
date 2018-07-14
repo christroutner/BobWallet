@@ -1,8 +1,8 @@
 #!/bin/bash
 
 rm -rf ./bcoin
-rm -f ./app/public/bcoin.js
-rm -f ./app/public/bcoin-worker.js
+rm -f ./bob/public/bcoin.js
+rm -f ./bob/public/bcoin-worker.js
 
 git clone https://github.com/bcoin-org/bcoin.git
 cd ./bcoin
@@ -11,5 +11,5 @@ npm install
 npm run webpack-browser
 cd ..
 
-cp ./bcoin/browser/bcoin.js ./app/public/bcoin.js
-cp ./bcoin/browser/bcoin-worker.js ./app/public/bcoin-worker.js
+cp ./bcoin/browser/bcoin.js ./bob/public/bcoin.js
+cp ./bcoin/browser/bcoin-worker.js ./bob/public/bcoin-worker.js

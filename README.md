@@ -6,16 +6,12 @@ Note: This software is in Beta and should only be used on Testnet until thorough
 
 Bob Wallet was created to help preserve Bitcoin's fungibility. Today it is easy to trace Bitcoin transactions from address to address by simply using any public Block Explorer. Bob Wallet helps fix this.
 
-To start, you will create a Bob Wallet and deposit Bitcoin to your Public address. Bob Wallet will automatically move your Bitcoin from your Public to your Private Wallet. This transfer happens by joining together all other Bob Wallet users in order to create a single transaction called a CoinJoin. Your Bitcoin can not be stolen since only you own and control your wallet keys and [no one can determine your Private Wallet addresses](https://github.com/bobwallet/bobwallet/blob/master/docs/shufflelink.md). Let's help keep Bitcoin fungible!
-
-## What Bob Wallet is not?
-
-Bob Wallet is not a traditional Bitcoin wallet. You cannot use it to make a payment to someone else. Its only purpose right now is to move your Bitcoins from your Public Wallet to your Private Wallet securely without anyone knowing your Private Wallet addresses. You will have to use a separate Bitcoin wallet after your Bitcoin has been made Private in order to spend them. Ideally, use a full-node for your Private Wallet because 3rd-party balance queries can de-anonymize you.
+To start, you will create a Bob Wallet and deposit Bitcoin to your Public Wallet. Bob Wallet will automatically move your Bitcoin from your Public to your Private Wallet. This transfer happens by joining together all other Bob Wallet users in order to create a single transaction called a CoinJoin. Your Bitcoin can not be stolen since only you own and control your wallet keys and [no one can determine your Private Wallet addresses](https://github.com/bobwallet/bobwallet/blob/master/docs/shufflelink.md). Let's help keep Bitcoin fungible!
 
 ## How to get started
 
-1.  Go to: [https://bobwallet.github.io](https://bobwallet.github.io) OR [download Bob Wallet](https://github.com/BobWallet/BobWallet/archive/master.zip) and drag and drop `bobwallet.html` into your browser
-2.  Click "Start" to create a new Bob Wallet
+1.  Go to: [https://bobwallet.github.io](https://bobwallet.github.io)
+2.  Click "Start BTC" or "Start BCH" to create a new Bob Wallet
 3.  Deposit Bitcoin into your Public Wallet address
 4.  Bob Wallet will automatically enter you into CoinJoin rounds with every other Bob Wallet user
 5.  A successful round will send a portion of your Public Bitcoin into your Private Wallet

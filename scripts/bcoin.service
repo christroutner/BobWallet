@@ -2,8 +2,10 @@
 Description=Bcoin
 
 [Service]
+User=bcoin
+Group=bcoin
 Environment=NODE_ENV=production
-ExecStart=/home/pi/.nvm/versions/node/v10.5.0/bin/bcoin --prefix /mnt/usbstorage/bcoin_testnet --network testnet --index-tx --index-address --api-key somepassword --http-host=0.0.0.0 --persistent-mempool
+ExecStart=/home/pi/.nvm/versions/node/v10.5.0/bin/bcoin --prefix /mnt/usbstorage/bcoin_testnet --network testnet --index-address --api-key somepassword --persistent-mempool --prune
 Restart=always
 
 [Install]

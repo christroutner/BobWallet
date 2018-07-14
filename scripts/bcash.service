@@ -5,7 +5,7 @@ Description=Bcash
 User=bcash
 Group=bcash
 Environment=NODE_ENV=production
-ExecStart=/home/bcash/bcash/bin/bcash --prefix /mnt/usbstorage/bcash_testnet --network testnet --index-tx --index-address --api-key somepassword --http-host=0.0.0.0 --persistent-mempool
+ExecStart=/home/bcash/bcash/bin/bcash --prefix /mnt/usbstorage/bcash_testnet --network testnet --index-address --api-key somepassword --persistent-mempool --prune
 Restart=always
 
 [Install]
