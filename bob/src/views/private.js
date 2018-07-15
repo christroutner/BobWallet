@@ -155,7 +155,6 @@ class PrivateView extends Component {
 
               <View style={{ flex: 1 }} />
 
-              <View style={{ height: 10 }} />
               <View style={{ margin: 10 }}>
                 <View
                   style={{
@@ -178,7 +177,7 @@ class PrivateView extends Component {
                     }}
                   />
                 </View>
-                <View style={{ height: 10 }} />
+                {/* <View style={{ height: 4 }} /> */}
 
                 <Button
                   title="Send"

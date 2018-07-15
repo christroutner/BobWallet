@@ -21,7 +21,7 @@ export const download = content => {
   FileSaver.saveAs(blob, 'bob_backup.txt');
 };
 
-export const smallScreen = Dimensions.get('window').width < 553;
+export const smallScreen = Dimensions.get('window').width <= 542;
 
 const ROUND_MAP = {
   e: 'error',

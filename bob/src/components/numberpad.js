@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { View, TouchableOpacity, Text } from 'react-native';
-import { formatSat } from '../helpers';
+import { formatSat, smallScreen } from '../helpers';
 import { colors } from '../styles';
 
 const NumButton = ({ press, text }) => {
   return (
     <TouchableOpacity
       style={{
-        height: 60,
+        height: smallScreen ? 50 : 60,
         width: 86,
         alignItems: 'center',
         justifyContent: 'center',
@@ -55,7 +55,7 @@ class ComponentNumPad extends Component {
         <Text style={{ alignSelf: 'center', fontSize: 32, fontWeight: 'bold' }}>
           {formatSat(value)}
         </Text>
-        <View style={{ height: 10 }} />
+        <View style={{ height: smallScreen ? 2 : 10 }} />
         <View style={{ flexDirection: 'row' }}>
           <NumButton press={this.onPress} text="1" />
           <NumButton press={this.onPress} text="2" />

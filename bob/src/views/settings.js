@@ -72,12 +72,12 @@ class Settings extends Component {
           />
           <View style={{ height: 10 }} />
           <Button
-            title="Download Backup"
+            title="Download/Copy Backup"
             color={colors.darkgray}
             onPress={() => {
-              // ActionsSettings.copyBackup();
+              ActionsSettings.copyBackup();
               ActionsSettings.downloadBackup();
-              // this.flash('Copied Backup to Clipboard.');
+              this.flash('Copied Backup to Clipboard.');
             }}
           />
           <View style={{ height: 10 }} />

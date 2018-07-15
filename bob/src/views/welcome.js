@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { observer } from 'mobx-react';
 import { View, Text, Button } from 'react-native';
 import Github from '../components/github';
+import TextInput from '../components/textinput';
 import ActionsClient from '../actions/client';
 import ActionsSettings from '../actions/settings';
 import { colors } from '../styles';
@@ -60,6 +61,7 @@ class Welcome extends Component {
               title="Start BTC"
               onPress={() => {
                 ActionsClient.start('tBTC');
+                ActionsSettings.copyBackup();
                 ActionsSettings.downloadBackup();
               }}
             />
@@ -71,6 +73,7 @@ class Welcome extends Component {
               title="Start BCH"
               onPress={() => {
                 ActionsClient.start('tBCH');
+                ActionsSettings.copyBackup();
                 ActionsSettings.downloadBackup();
               }}
             />
@@ -104,6 +107,25 @@ class Welcome extends Component {
         </View>
         <View style={{ height: 8 }} />
         <input type="file" id="files" name="files" style={{ width: 220 }} />
+        <TextInput
+          placeholder="OR paste in backup or seed"
+          value=""
+          onChangeText={text => {
+            if (ActionsClient.isValidSeed(text)) {
+              const result = window.confirm(`
+Click OK for BCH
+
+Click CANCEL for BTC`);
+              if (result) {
+                ActionsClient.start('tBCH', text);
+              } else {
+                ActionsClient.start('tBTC', text);
+              }
+            } else {
+              ActionsSettings.setBackup(text);
+            }
+          }}
+        />
         <View style={{ flex: 1 }} />
         <Github />
       </View>

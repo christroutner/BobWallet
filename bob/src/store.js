@@ -26,6 +26,7 @@ const DEFAULT_SETTINGS = {
   successfulRounds: 0,
   failedRounds: 0,
   totalFees: 0,
+  created: new Date().getTime(),
 };
 
 class Store {

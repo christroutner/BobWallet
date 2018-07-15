@@ -23,12 +23,16 @@ class ActionsClient {
     observe(store, 'loaded', () => this.initAlice({}));
     setInterval(() => this.getRoundInfo(), 1000);
   }
-  start(chain) {
+  start(chain, seed) {
     store.settings.chain = chain;
-    const seed = this.newMnemonic(); // Share seed between public/private wallets
+    seed = seed || this.newMnemonic(); // Share seed between public/private wallets
+    if (!this.isValidSeed(seed)) {
+      throw new Error('Invalid seed');
+    }
     store.settings.publicSeed = seed;
     store.settings.privateSeed = seed;
     store.settings.routeTab = 'Public';
+    store.settings.created = new Date().getTime();
     store.save();
     this.initAlice({});
 
@@ -93,11 +97,7 @@ class ActionsClient {
         console.log('callbackRoundComplete', tx);
         const {
           bobClient,
-          settings: {
-            successfulRounds,
-            failedRounds,
-            totalFees,
-          },
+          settings: { successfulRounds, failedRounds, totalFees },
         } = store;
         store.settings.publicIndex = bobClient.aliceIndex;
         store.settings.privateIndex = bobClient.bobIndex;
