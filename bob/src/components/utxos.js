@@ -8,7 +8,7 @@ import moment from 'moment';
 
 class ComponentUtxo extends Component {
   render() {
-    const { computedAllUtxos } = store;
+    const { computedAllUtxos, coinRate } = store;
 
     return (
       <FlatList
@@ -66,7 +66,10 @@ class ComponentUtxo extends Component {
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={{ fontWeight: 'bold' }}>Amount: </Text>
-                <Text style={{}}>{formatSat(round.o)}</Text>
+                <Text style={{}}>
+                  {formatSat(round.o, coinRate).bits},{' '}
+                  {formatSat(round.o, coinRate, true).usd}
+                </Text>
               </View>
               {round.b > 0 && (
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>

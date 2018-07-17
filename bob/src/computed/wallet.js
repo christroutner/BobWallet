@@ -14,7 +14,10 @@ const ComputedWallet = store => {
   });
 
   store.computedMaxSend = computed(() => {
-    const { completedRounds, feesPerTx } = store;
+    const {
+      completedRounds,
+      settings: { feesPerTx },
+    } = store;
     const fee = !isNaN(feesPerTx) ? feesPerTx : 0;
     let max = 0;
     for (const round of completedRounds.slice()) {

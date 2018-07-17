@@ -2,18 +2,50 @@ import { Dimensions } from 'react-native';
 import BigNumber from 'bignumber.js';
 import FileSaver from 'file-saver';
 
-export const formatSat = amount => {
+export const rateToSat = (amount, rate) => {
+  amount = new BigNumber(amount.toString());
+  rate = new BigNumber(rate.toString());
+  return amount.times(100000000).dividedBy(rate);
+};
+
+export const satToRate = (amount, rate) => {
+  amount = new BigNumber(amount.toString());
+  rate = new BigNumber(rate.toString());
+  return amount.dividedBy(100000000).times(rate);
+};
+
+export const satToBits = amount => {
+  amount = new BigNumber(amount.toString());
+  return amount.dividedBy(100);
+};
+
+export const formatSat = (amount, rate, dontFallback) => {
   if (typeof amount === 'undefined' || amount === null) {
-    return `Unknown Amount`;
+    return {
+      bits: `Unknown Amount`,
+      usd: `Unknown Amount`,
+    };
   }
-  const num = new BigNumber(amount.toString());
+  amount = new BigNumber(amount.toString());
+  if (rate) {
+    rate = new BigNumber(rate.toString());
+  }
   // if (wholeNumber) {
   //   return `${num.dividedBy(100000000).toFormat(8)} ${ticker || ''}`;
   // } else {
   //   return `${num.dividedBy(100).toFormat(0)} ${ticker || ''} bits`;
   // }
   // return `${num.dividedBy(100).toFormat(0)} ${ticker || ''} bits`;
-  return `${num.dividedBy(100).toFormat(0)} bits`;
+  const bits = `${satToBits(amount).toFormat(0)} bits`;
+  const usd = rate
+    ? `$${satToRate(amount, rate).toFormat(2)}`
+    : dontFallback
+      ? ''
+      : bits;
+  return {
+    bits,
+    usd,
+  };
 };
 
 export const download = content => {

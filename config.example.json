@@ -17,5 +17,6 @@
   "TIMEOUT": 5,
   "PRODUCTION": false,
   "PROD_URL": "api.yourdomain.com",
-  "EMAIL": "youremail@example.com"
+  "EMAIL": "youremail@example.com",
+  "FETCH_RATES": true
 }

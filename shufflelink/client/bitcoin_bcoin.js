@@ -369,7 +369,7 @@ class Bitcoin {
     if (min_pool && alices.length < min_pool) {
       throw new Error('Not enough alices in the round');
     }
-    if (max_fees && fees < max_fees) {
+    if (max_fees && fees > max_fees) {
       throw new Error('Fees exceed max fees');
     }
     if (denomination <= this.DUST_LIMIT) {

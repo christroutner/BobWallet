@@ -34,6 +34,8 @@ class Coordinator {
     this.bitcoinUtils = {
       tBTC: bitcoinUtilsCore,
       tBCH: bitcoinUtilsCash,
+      BTC: null,
+      BCH: null,
     };
     this.tstart = {};
     this.DEBUG_TEST_MODE = DEBUG_TEST_MODE;
@@ -45,19 +47,45 @@ class Coordinator {
     this.alices = {
       tBTC: {},
       tBCH: {},
-      // BTC: {},
-      // BCH: {},
+      BTC: {},
+      BCH: {},
     };
     this.roundParams = {
       tBTC: {},
       tBCH: {},
-      // BTC: {},
-      // BCH: {},
+      BTC: {},
+      BCH: {},
     };
     this.PUBLIC_KEY_LENGTH = Shuffle.generateKey().getPublicKey().length;
     if (AUTO_START) {
       if (bitcoinUtilsCore) this.loopStart('tBTC');
       if (bitcoinUtilsCash) this.loopStart('tBCH');
+    }
+    this.chainRates = {
+      BTC: null,
+      BCH: null,
+      tBTC: null,
+      tBCH: null,
+    };
+
+    if (CONFIG.FETCH_RATES) {
+      const fetch = require('node-fetch');
+      const url = `https://api.coinmarketcap.com/v2/ticker/`;
+      const fetchRates = async () => {
+        try {
+          const res = await fetch(url);
+          const json = await res.json();
+          this.chainRates.tBTC = json.data['1'].quotes.USD.price;
+          this.chainRates.BTC = json.data['1'].quotes.USD.price;
+          this.chainRates.tBCH = json.data['1831'].quotes.USD.price;
+          this.chainRates.BCH = json.data['1831'].quotes.USD.price;
+          this.consoleLog.info('Coinmarketcap', this.chainRates);
+        } catch (err) {
+          this.consoleLog.error('Coinmarketcap error', err);
+        }
+      };
+      fetchRates();
+      setInterval(() => fetchRates(), 60 * 1000);
     }
   }
   disconnected(uuid) {
@@ -96,7 +124,8 @@ class Coordinator {
       const denomination = OUTPUT_SAT;
       const fees = FEE_PER_INPUT;
       const needed = denomination + (utxos.length || 1) * fees;
-      return { address, balance, utxos, needed, fees };
+      const rate = 800; // Fixed
+      return { address, balance, utxos, needed, fees, rate };
     } else if (
       this.bitcoinUtils[chain] &&
       !this.bitcoinUtils[chain].isInvalid(address)
@@ -111,7 +140,8 @@ class Coordinator {
         const denomination = this.roundParams[chain].denomination || OUTPUT_SAT;
         const fees = this.roundParams[chain].fees || FEE_PER_INPUT;
         const needed = denomination + (utxos.length || 1) * fees;
-        return { address, balance, needed, utxos, fees };
+        const rate = this.chainRates[chain];
+        return { address, balance, needed, utxos, fees, rate };
       } catch (err) {
         return {
           error: `Something went wrong checking balance: ${err.message}`,

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { View, TouchableOpacity, Text } from 'react-native';
-import { formatSat, smallScreen } from '../helpers';
+import { formatSat, smallScreen, satToRate, rateToSat } from '../helpers';
 import { colors } from '../styles';
 
 const NumButton = ({ press, text }) => {
@@ -26,35 +26,77 @@ NumButton.propTypes = {
 };
 
 class ComponentNumPad extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.onPress = this.onPress.bind(this);
+    this.state = {
+      showUsd: props.rate ? true : false,
+    };
+  }
+  componentWillReceiveProps(newProps) {
+    if (!this.props.rate && newProps.rate) {
+      this.setState({ showUsd: true });
+    }
   }
   onPress(number) {
-    const { max, flash, onChange, value } = this.props;
-    let newValue = value.toString().slice(0, -2);
-    if (number === '<') {
-      newValue = newValue.toString().slice(0, -1);
+    const { max, flash, onChange, value, rate } = this.props;
+    const { showUsd } = this.state;
+    let newValue;
+    if (showUsd) {
+      const previousUsd = satToRate(value, rate * 100).toFixed(0);
+      if (number === '<') {
+        newValue = previousUsd.toString().slice(0, -1);
+      } else {
+        newValue = `${previousUsd}${number}`;
+      }
+      if (!newValue) {
+        newValue = '0';
+      }
+      newValue = rateToSat(newValue, rate * 100)
+        .toFixed(0)
+        .toString();
     } else {
-      newValue = `${newValue}${number}`;
+      newValue = value.toString().slice(0, -2);
+      if (number === '<') {
+        newValue = newValue.toString().slice(0, -1);
+      } else {
+        newValue = `${newValue}${number}`;
+      }
+      if (!newValue) {
+        newValue = '0';
+      }
+      newValue = `${newValue}00`;
     }
-    if (!newValue) {
-      newValue = '0';
-    }
-    newValue = `${newValue}00`;
+
     if (newValue > max) {
-      flash(`For privacy you can only send ${formatSat(max)} per tx`);
+      const price = showUsd
+        ? formatSat(max, rate).usd
+        : formatSat(max, rate).bits;
+      flash(`For privacy you can only send ${price} per tx`);
       return onChange(max);
     }
+    console.log('OIWEJFOIWEJFOIWJF', newValue);
     onChange(newValue);
   }
   render() {
-    const { value } = this.props;
+    const { showUsd } = this.state;
+    const { value, rate } = this.props;
+
+    const price = showUsd
+      ? formatSat(value, rate).usd
+      : formatSat(value, rate).bits;
+
     return (
       <View style={{ alignSelf: 'center' }}>
-        <Text style={{ alignSelf: 'center', fontSize: 32, fontWeight: 'bold' }}>
-          {formatSat(value)}
-        </Text>
+        <TouchableOpacity
+          onPress={() => this.setState({ showUsd: !rate ? false : !showUsd })}
+        >
+          <Text
+            style={{ alignSelf: 'center', fontSize: 32, fontWeight: 'bold' }}
+          >
+            {price}
+          </Text>
+        </TouchableOpacity>
         <View style={{ height: smallScreen ? 2 : 10 }} />
         <View style={{ flexDirection: 'row' }}>
           <NumButton press={this.onPress} text="1" />
@@ -82,6 +124,7 @@ class ComponentNumPad extends Component {
 }
 
 ComponentNumPad.propTypes = {
+  rate: PropTypes.number, // Bits
   max: PropTypes.number, // Bits
   onChange: PropTypes.func,
   flash: PropTypes.func,

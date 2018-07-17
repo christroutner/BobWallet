@@ -42,7 +42,8 @@ class PrivateView extends Component {
       computedAllUtxos,
       computedMaxSend,
       computedPrivateBalance,
-      feesPerTx,
+      coinRate,
+      settings: { feesPerTx },
     } = store;
 
     return (
@@ -53,12 +54,20 @@ class PrivateView extends Component {
           >
             <Text
               style={{
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: 'bold',
                 alignSelf: 'center',
               }}
             >
-              {formatSat(computedPrivateBalance.get())}
+              {formatSat(computedPrivateBalance.get(), coinRate).usd}
+            </Text>
+            <Text
+              style={{
+                alignSelf: 'center',
+                color: colors.lightgray,
+              }}
+            >
+              {formatSat(computedPrivateBalance.get(), coinRate).bits}
             </Text>
             <View style={{ marginTop: 6, flexDirection: 'row' }}>
               <Button
@@ -151,6 +160,7 @@ class PrivateView extends Component {
                 value={amount}
                 flash={msg => this.flash(msg)}
                 max={computedMaxSend.get()}
+                rate={coinRate}
               />
 
               <View style={{ flex: 1 }} />
@@ -193,16 +203,25 @@ class PrivateView extends Component {
                       const dustLimit = ActionsClient.dustLimit();
                       if (sendAmount < dustLimit) {
                         return alert(
-                          `Must send at least ${formatSat(dustLimit + 99)}`
+                          `Must send at least ${
+                            formatSat(dustLimit + 99, coinRate).bits
+                          }`
                         );
                       }
 
                       if (
                         window.confirm(`
-Do you want to send ${formatSat(sendAmount)} to ${address}
+Do you want to send ${formatSat(sendAmount, coinRate, true).usd}   ${
+                          formatSat(sendAmount, coinRate).bits
+                        } to
+${address}
 
-Miner Fee: ${formatSat(fees)}
-Total: ${formatSat(total)}
+Miner Fee: ${formatSat(fees, coinRate, true).usd}        ${
+                          formatSat(fees, coinRate).bits
+                        }
+Total:        ${formatSat(total, coinRate, true).usd}       ${
+                          formatSat(total, coinRate).bits
+                        }
 `)
                       ) {
                         this.setState({ sending: true }, async () => {

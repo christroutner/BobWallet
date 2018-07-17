@@ -9,17 +9,17 @@ let CONFIG = {
   BCASH_URI: 'localhost:18332',
   BCASH_APIKEY: 'changeme',
   BCOIN: true,
-  BCASH: false,
+  BCASH: true,
   SERVE_STATIC_APP: true,
-  CHAIN: 'testnet',
   LOG_TO_FILE: false,
   MIN_POOL: 2,
   MAX_POOL: 1000,
   FEE_PER_INPUT: 10000,
   OUTPUT_SAT: 100000,
-  PORT: 80,
-  PRODUCTION: true,
+  PORT: 8081,
+  PRODUCTION: false,
   TIMEOUT: 5,
+  FETCH_RATES: true,
 };
 try {
   CONFIG = require('../../config.json');

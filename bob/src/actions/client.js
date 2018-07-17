@@ -45,7 +45,7 @@ class ActionsClient {
     store.clear();
   }
   processBalance(data = {}) {
-    const { address, balance, needed, fees } = data;
+    const { address, balance, needed, fees, rate } = data;
     if (address) {
       store.addressBalances.set(address, balance);
       store.saveBalances();
@@ -54,7 +54,11 @@ class ActionsClient {
       store.roundAmount = needed;
     }
     if (fees) {
-      store.feesPerTx = fees;
+      store.settings.feesPerTx = fees;
+      store.save();
+    }
+    if (rate) {
+      store.coinRate = rate;
     }
   }
   initAlice({
@@ -269,17 +273,28 @@ class ActionsClient {
       ].createTransaction(txObj);
       console.log('CREATED TX');
       let txid = tx.hash;
+      // let broadcasted = false;
       if (broadcast) {
-        const res = await bobClient.broadcastTx(serialized);
-        console.log('Boadcast tx response', res);
+        let res;
+        try {
+          res = await bobClient.broadcastTx(serialized);
+          console.log('Boadcast tx response', res);
 
-        if (res.error) {
-          throw new Error(res.error);
+          if (res.error) {
+            throw new Error(res.error);
+          }
+          if (!txid) {
+            throw new Error('Missing txid');
+          }
+          txid = res.result;
+          // broadcasted = true;
+        } catch (err) {
+          console.log('ERROR broadcasting tx', err);
+          if (err.message === 'Failed to fetch') {
+            throw new Error('Could not broadcast trasanction');
+          }
+          throw err;
         }
-        if (!txid) {
-          throw new Error('Missing txid');
-        }
-        txid = res.result;
       }
 
       let newUtxo;

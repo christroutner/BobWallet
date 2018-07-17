@@ -33,12 +33,12 @@ class Home extends Component {
               }}
             />
             <ComponentTab
-              text="Public Wallet"
+              text="Receive"
               selected={routeTab === 'Public'}
               onPress={() => ActionsSettings.goToPublic()}
             />
             <ComponentTab
-              text="Private Wallet"
+              text="Send"
               selected={routeTab === 'Private'}
               onPress={() => ActionsSettings.goToPrivate()}
             />

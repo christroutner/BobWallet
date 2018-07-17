@@ -10,8 +10,8 @@ class ComponentTab extends Component {
       <TouchableOpacity
         style={{
           borderWidth: 0.5,
-          paddingTop: 6,
-          paddingBottom: 6,
+          paddingTop: 12,
+          paddingBottom: 12,
           width: 85,
           backgroundColor: selected ? colors.background : colors.background,
           borderTopColor: selected ? colors.lightgray : colors.background,

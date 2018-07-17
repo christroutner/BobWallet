@@ -26,6 +26,8 @@ const DEFAULT_SETTINGS = {
   successfulRounds: 0,
   failedRounds: 0,
   totalFees: 0,
+  feesPerTx: null,
+
   created: new Date().getTime(),
 };
 
@@ -39,8 +41,8 @@ class Store {
       roundInfo: {},
       roundError: null,
       neededFunds: null,
-      feesPerTx: null,
       roundAmount: null,
+      coinRate: null,
 
       settings: DEFAULT_SETTINGS,
       completedRounds: observable.array(),

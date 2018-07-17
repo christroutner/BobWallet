@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { observer } from 'mobx-react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { colors } from '../styles';
 import { formatSat } from '../helpers';
 import { BLOCK_TXID_URL } from '../config';
@@ -10,6 +10,7 @@ import moment from 'moment';
 class HistoryView extends Component {
   render() {
     const {
+      coinRate,
       completedRounds,
       settings: { chain },
     } = store;
@@ -29,14 +30,13 @@ class HistoryView extends Component {
           </View>
         )}
         {completedRounds.length > 0 && (
-          <ScrollView
+          <FlatList
+            keyExtractor={item => item.x}
+            data={completedRounds}
             style={{ alignSelf: 'center' }}
-            contentContainerStyle={{}}
-          >
-            {completedRounds.map((round, index) => {
+            renderItem={({ item: round }) => {
               return (
                 <TouchableOpacity
-                  key={index}
                   disabled={!round.x}
                   onPress={() => {
                     // Linking.openURL(BLOCK_TXID_URL(chain, round.x))
@@ -57,7 +57,7 @@ class HistoryView extends Component {
                       <Text>
                         Sent{' '}
                         <Text style={{ fontWeight: 'bold' }}>
-                          {formatSat(round.t)}
+                          {formatSat(round.t, coinRate).usd}
                         </Text>{' '}
                         to{'\n'}
                         <Text style={{ fontSize: 12 }}>{round.s}</Text>
@@ -68,7 +68,7 @@ class HistoryView extends Component {
                       <Text>
                         Received{' '}
                         <Text style={{ fontWeight: 'bold' }}>
-                          {formatSat(round.o)}
+                          {formatSat(round.o, coinRate).usd}
                         </Text>{' '}
                         from Public Wallet
                       </Text>
@@ -84,8 +84,8 @@ class HistoryView extends Component {
                   </View>
                 </TouchableOpacity>
               );
-            })}
-          </ScrollView>
+            }}
+          />
         )}
       </View>
     );
