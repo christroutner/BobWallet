@@ -10,7 +10,7 @@ class Server extends Coordinator {
     super(params);
 
     const {
-      CONFIG: { SERVE_STATIC_APP, PRODUCTION, EMAIL, PROD_URL, PORT, TIMEOUT },
+      CONFIG: { SERVE_STATIC_APP, PRODUCTION, EMAIL, PROD_URLS, PORT, TIMEOUT },
     } = params;
 
     app.use(cors());
@@ -19,8 +19,9 @@ class Server extends Coordinator {
 
     app.post('/txdrop', async (req, res) => {
       try {
-        this.consoleLog.info('/txdrop', req.body);
-        res.send(await this.broadcastTx(req.body));
+        const { chain, tx } = req.body;
+        this.logger[chain].log('/txdrop', tx);
+        res.send(await this.broadcastTx({ tx, chain }));
       } catch (err) {
         res.send({ error: err.message });
       }
@@ -29,15 +30,15 @@ class Server extends Coordinator {
     if (SERVE_STATIC_APP) {
       app.get('/', (req, res) => {
         res.sendFile(path.join(__dirname, '../../bobwallet.html'), err => {
-          !err && this.consoleLog.info('Sent index.html');
-          !!err && this.consoleLog.error('Error sending index.html ', err);
+          !err && this.logger.log('Sent index.html');
+          !!err && this.logger.error('Error sending index.html ', err);
         });
       });
     }
 
     let server;
     if (PRODUCTION) {
-      this.consoleLog.info('Running Production');
+      this.logger.log('Running Production');
       const greenlock = require('greenlock-express').create({
         // Let's Encrypt v2 is ACME draft 11
         version: 'draft-11',
@@ -46,7 +47,7 @@ class Server extends Coordinator {
         // Note: If at first you don't succeed, switch to staging to debug
         email: EMAIL,
         agreeTos: true,
-        approveDomains: [PROD_URL],
+        approveDomains: PROD_URLS,
         // You MUST have access to write to directory where certs are saved
         // ex: /home/foouser/acme/etc
         configDir: require('path').join(require('os').homedir(), 'acme', 'etc'),
@@ -66,20 +67,14 @@ class Server extends Coordinator {
     });
     this.io.on('connection', client => {
       const uuid = client.id;
-      this.consoleLog.info('Connected: ', uuid);
+      this.logger.log('Connected: ', uuid);
       client.on('checkBalance', async ({ address, chain }, callback) => {
         const response = await this.balance({ address, chain });
-        this.consoleLog.info(
-          chain,
-          ': checkBalance: ',
-          address,
-          ', ',
-          response.balance
-        );
+        this.logger[chain].log('checkBalance:', address, response.balance);
         callback({ ...response, utxos: undefined });
       });
       client.on('disconnect', () => {
-        this.consoleLog.info('Disconnected: ', uuid);
+        this.logger.log('Disconnected: ', uuid);
         // TODO: Do something if round is started
         this.disconnected(uuid);
       });
@@ -109,7 +104,7 @@ class Server extends Coordinator {
       });
     });
 
-    this.consoleLog.info('Listening on ', PRODUCTION ? '80 and 443' : PORT);
+    this.logger.log('Listening on ', PRODUCTION ? '80 and 443' : PORT);
   }
   exit() {
     return new Promise(resolve => {

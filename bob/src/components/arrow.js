@@ -14,7 +14,7 @@ class ComponentArrow extends Component {
     } = this.props;
 
     return (
-      <View style={{ alignItems: 'center', marginLeft: 4, marginRight: 4 }}>
+      <View style={{ alignItems: 'center', marginLeft: 10 }}>
         <TouchableOpacity disabled={disabled} onPress={() => onPressUp()}>
           <View
             style={{

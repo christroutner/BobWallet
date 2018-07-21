@@ -71,6 +71,7 @@ const ROUND_MAP = {
   i: 'index', // Coin index in tx
   u: 'spent', // Boolean if spent
   // n: 'disabled', // Boolean to mark if tx is disabled
+  r: 'rate', // USD rate
   d: 'date',
 };
 

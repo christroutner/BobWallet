@@ -72,15 +72,14 @@ class ComponentNumPad extends Component {
       const price = showUsd
         ? formatSat(max, rate).usd
         : formatSat(max, rate).bits;
-      flash(`For privacy you can only send ${price} per tx`);
-      return onChange(max);
+      flash(`To keep privacy the max send is ${price}`);
+      return onChange(max, showUsd);
     }
-    console.log('OIWEJFOIWEJFOIWJF', newValue);
-    onChange(newValue);
+    onChange(newValue, showUsd);
   }
   render() {
     const { showUsd } = this.state;
-    const { value, rate } = this.props;
+    const { value, rate, onChange } = this.props;
 
     const price = showUsd
       ? formatSat(value, rate).usd
@@ -89,7 +88,11 @@ class ComponentNumPad extends Component {
     return (
       <View style={{ alignSelf: 'center' }}>
         <TouchableOpacity
-          onPress={() => this.setState({ showUsd: !rate ? false : !showUsd })}
+          onPress={() => {
+            const nextUsd = !rate ? false : !showUsd;
+            this.setState({ showUsd: nextUsd });
+            onChange(value, nextUsd);
+          }}
         >
           <Text
             style={{ alignSelf: 'center', fontSize: 32, fontWeight: 'bold' }}

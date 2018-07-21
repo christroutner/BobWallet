@@ -1,4 +1,5 @@
 import { computed } from 'mobx';
+import ActionsClient from '../actions/client';
 
 const ComputedWallet = store => {
   store.computedRoundsLeft = computed(() => {
@@ -16,9 +17,11 @@ const ComputedWallet = store => {
   store.computedMaxSend = computed(() => {
     const {
       completedRounds,
-      settings: { feesPerTx },
+      settings: { feesPerByte },
     } = store;
-    const fee = !isNaN(feesPerTx) ? feesPerTx : 0;
+    const fee = !isNaN(feesPerByte)
+      ? ActionsClient.calculateFee(feesPerByte)
+      : 0;
     let max = 0;
     for (const round of completedRounds.slice()) {
       if (!round.e && !round.u && !isNaN(round.o) && round.o > max) {

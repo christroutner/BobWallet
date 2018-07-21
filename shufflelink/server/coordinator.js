@@ -1,18 +1,11 @@
 const SERVER_STATES = require('../client/server_states');
 const SERVER_VERSION = require('../../package.json').version;
 const Shuffle = require('../client/shuffle');
-const path = require('path');
 const randombytes = require('randombytes');
 const sha256 = require('js-sha256');
-
-const DEFAULT_CHAIN = 'tBTC';
-
-let consoleLog = {
-  info: (...msg) => console.log('SERVER: ', ...msg),
-  warn: (...msg) => console.log('SERVER: ', ...msg),
-  error: (...msg) => console.log('SERVER ERROR: ', ...msg),
-  log: (...msg) => console.log('SERVER: ', ...msg),
-};
+const Logger = require('./logger');
+const path = require('path');
+const Config = require('./configuration');
 
 class Coordinator {
   constructor({
@@ -22,14 +15,11 @@ class Coordinator {
     DEBUG_TEST_MODE = true,
     PUNISH_BAN_LIMIT = 3,
     ENFORCE_PUNISHMENT = false,
-    AUTO_START = false,
   }) {
-    this.consoleLog = consoleLog;
     if (CONFIG.LOG_TO_FILE) {
-      this.consoleLog = require('simple-node-logger').createSimpleLogger({
-        logFilePath: path.join(__dirname, '../../logs/coordinator.log'),
-        timestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-      });
+      this.logger = new Logger(path.join(__dirname, '../../logs'));
+    } else {
+      this.logger = new Logger();
     }
     this.bitcoinUtils = {
       tBTC: bitcoinUtilsCore,
@@ -57,7 +47,9 @@ class Coordinator {
       BCH: {},
     };
     this.PUBLIC_KEY_LENGTH = Shuffle.generateKey().getPublicKey().length;
-    if (AUTO_START) {
+    if (!DEBUG_TEST_MODE) {
+      this.logger.tBTC.log('Starting using config:', this.CONFIG);
+      this.logger.tBCH.log('Starting using config:', this.CONFIG);
       if (bitcoinUtilsCore) this.loopStart('tBTC');
       if (bitcoinUtilsCash) this.loopStart('tBCH');
     }
@@ -79,9 +71,13 @@ class Coordinator {
           this.chainRates.BTC = json.data['1'].quotes.USD.price;
           this.chainRates.tBCH = json.data['1831'].quotes.USD.price;
           this.chainRates.BCH = json.data['1831'].quotes.USD.price;
-          this.consoleLog.info('Coinmarketcap', this.chainRates);
+          this.logger.log(
+            `Coinmarketcap: BTC: ${this.chainRates.BTC}, BCH: ${
+              this.chainRates.BCH
+            }`
+          );
         } catch (err) {
-          this.consoleLog.error('Coinmarketcap error', err);
+          this.logger.error('Coinmarketcap error', err);
         }
       };
       fetchRates();
@@ -97,13 +93,13 @@ class Coordinator {
   exit() {
     Object.keys(this.tstart).map(key => clearTimeout(this.tstart[key]));
   }
-  getAlices(chain = DEFAULT_CHAIN) {
+  getAlices(chain) {
     return Object.keys(this.alices[chain]).map(key => this.alices[chain][key]);
   }
   getConnections() {
     return Object.keys(this.connections).map(key => this.connections[key]);
   }
-  async broadcastError(error, chain = DEFAULT_CHAIN) {
+  async broadcastError(error, chain) {
     return await this.asyncSend(this.getConnections(), async connection => {
       if (typeof connection.roundError === 'function') {
         await connection.roundError({ error, chain });
@@ -111,8 +107,8 @@ class Coordinator {
     });
   }
 
-  async balance({ address, chain = DEFAULT_CHAIN }) {
-    const { OUTPUT_SAT, FEE_PER_INPUT } = this.CONFIG;
+  async balance({ address, chain }) {
+    const { DENOMINATION, SAT_PER_BYTE } = this.CONFIG;
     if (this.DEBUG_TEST_MODE) {
       const utxos = this.bitcoinUtils[chain].getFakeUtxos({
         address,
@@ -121,27 +117,44 @@ class Coordinator {
         satoshis: 124000000,
       });
       const balance = this.bitcoinUtils[chain].getUtxosBalance(utxos, address);
-      const denomination = OUTPUT_SAT;
-      const fees = FEE_PER_INPUT;
-      const needed = denomination + (utxos.length || 1) * fees;
+      const denomination = DENOMINATION[chain];
+      const fees = SAT_PER_BYTE[chain];
+      const needed =
+        denomination +
+        this.bitcoinUtils[chain].calculateFeeSat({
+          users: 2,
+          inputs: utxos.length,
+          outputs: 2,
+          fees,
+        });
       const rate = 800; // Fixed
-      return { address, balance, utxos, needed, fees, rate };
+      return { address, balance, utxos, needed, fees, rate, chain };
     } else if (
       this.bitcoinUtils[chain] &&
-      !this.bitcoinUtils[chain].isInvalid(address)
+      !this.bitcoinUtils[chain].isInvalid(address) &&
+      DENOMINATION[chain] &&
+      SAT_PER_BYTE[chain]
     ) {
       try {
         const utxos = await this.bitcoinUtils[chain].getUtxos(address);
-        // console.log('Balance. Got utxos:', utxos);
+        // this.logger[chain].log('Balance. Got utxos:', utxos);
         const balance = this.bitcoinUtils[chain].getUtxosBalance(
           utxos,
           address
         );
-        const denomination = this.roundParams[chain].denomination || OUTPUT_SAT;
-        const fees = this.roundParams[chain].fees || FEE_PER_INPUT;
-        const needed = denomination + (utxos.length || 1) * fees;
+        const denomination =
+          this.roundParams[chain].denomination || DENOMINATION[chain];
+        const fees = this.roundParams[chain].fees || SAT_PER_BYTE[chain];
+        const needed =
+          denomination +
+          this.bitcoinUtils[chain].calculateFeeSat({
+            users: 2,
+            inputs: utxos.length,
+            outputs: 2,
+            fees,
+          });
         const rate = this.chainRates[chain];
-        return { address, balance, needed, utxos, fees, rate };
+        return { address, balance, needed, utxos, fees, rate, chain };
       } catch (err) {
         return {
           error: `Something went wrong checking balance: ${err.message}`,
@@ -162,7 +175,7 @@ class Coordinator {
           try {
             res = await callback(obj);
           } catch (err) {
-            console.log('ERROR', err);
+            this.logger.print(err);
           }
           resolve(res);
         });
@@ -170,7 +183,7 @@ class Coordinator {
     );
   }
 
-  async loopStart(chain = DEFAULT_CHAIN) {
+  async loopStart(chain) {
     clearTimeout(this.tstart[chain]);
     this.tstart[chain] = null;
     try {
@@ -182,35 +195,39 @@ class Coordinator {
           const res = await this.bitcoinUtils[chain].getInfo();
           progress = Math.floor(res.chain.progress * 100);
         } catch (err) {
-          this.consoleLog.error(err.message);
+          this.logger[chain].error(err.message);
           this.broadcastError(`Error: Could not connect to blockchain`, chain);
         }
         if (progress === 100) {
           await this.start({ chain });
         } else if (progress !== false) {
           const msg = `Syncing with blockchain ${chain}. ${progress}%`;
-          this.consoleLog.info(msg);
+          this.logger[chain].log(msg);
           this.broadcastError(msg, chain);
         }
       }
     } catch (err) {
-      this.consoleLog.error('LOOPSTART ERROR: ', err);
+      this.logger[chain].error('LOOPSTART ERROR: ', err);
     }
+    clearTimeout(this.tstart[chain]);
     this.tstart[chain] = setTimeout(() => {
       this.loopStart(chain);
     }, this.CONFIG.DELAY_BETWEEN_ROUNDS ? this.CONFIG.DELAY_BETWEEN_ROUNDS * 1000 : 10000); // Check to start every 10 seconds
   }
 
-  async start({ chain = DEFAULT_CHAIN }) {
+  async start({ chain }) {
+    this.CONFIG = await Config.get(this.DEBUG_TEST_MODE);
+    const min_pool = this.CONFIG.MIN_POOL[chain];
+    const max_pool = this.CONFIG.MAX_POOL[chain];
+    const fees = this.CONFIG.SAT_PER_BYTE[chain];
+    const denomination = this.CONFIG.DENOMINATION[chain];
+    if (!min_pool || !max_pool || !fees || !denomination) {
+      throw new Error(`Invalid configuration: ${JSON.stringify(this.CONFIG)}`);
+    }
+
     const connections = this.getConnections();
     this.alices[chain] = {};
     const round_id = randombytes(32).toString('base64');
-    const {
-      FEE_PER_INPUT: fees,
-      MIN_POOL: min_pool,
-      MAX_POOL: max_pool,
-      OUTPUT_SAT: denomination,
-    } = this.CONFIG;
     this.roundParams[chain] = {
       round_id,
       fees,
@@ -231,7 +248,10 @@ class Coordinator {
         round_chain: chain,
       });
       if (obj && obj.error) {
-        console.log('ERROR', obj.address, obj.error, obj.balance);
+        // this.logger[chain].print(obj.address, obj.error, obj.balance);
+        if (obj.error !== 'Not enough bitcoin to join round') {
+          this.logger[chain].print(obj.address, obj.error);
+        }
         if (typeof connection.roundError === 'function') {
           connection.roundError({ ...obj, chain: res.chain });
         }
@@ -247,15 +267,14 @@ class Coordinator {
       return previous + (alice.min_pool <= alices.length ? 1 : 0);
     }, 0);
     if (actualAlices < min_pool) {
-      // this.consoleLog.info(
-      return console.log(
+      return this.logger[chain].print(
         `Not enough alices to start: ${actualAlices} of ${min_pool} needed. ${
           alices.length
         } total. ${connections.length} connections`
       );
     }
     this.roundParams[chain].state = SERVER_STATES.shuffling;
-    this.consoleLog.info('Starting round');
+    this.logger[chain].log(`Starting round with ${actualAlices} users`);
     const publicKeys = alices.map(alice => ({
       address: alice.fromAddress,
       verify: alice.verify,
@@ -280,7 +299,7 @@ class Coordinator {
             `Invalid shuffle response: ${JSON.stringify(response)}`
           );
         }
-        this.consoleLog.info(`${alices[i].fromAddress} Shuffled`);
+        this.logger[chain].log(`${alices[i].fromAddress} Shuffled`);
       }
     } catch (err) {
       await this.blameGame({ alices, chain });
@@ -312,7 +331,7 @@ class Coordinator {
         []
       ),
     };
-    // console.log(txInfo);
+    // this.logger[chain].log(txInfo);
     let tx;
     try {
       tx = this.bitcoinUtils[chain].createTransaction({
@@ -324,7 +343,7 @@ class Coordinator {
         min_pool,
       }).tx;
     } catch (err) {
-      this.consoleLog.error('ERROR: ', err);
+      this.logger[chain].error(err);
       await this.blameGame({ alices, chain });
       // await this.roundError(`Failed at creating tx: ${err.message}`);
       return;
@@ -344,7 +363,7 @@ class Coordinator {
               }
               alice.signedTx = res.tx; // TODO: Validate signed tx
               resolve(res.tx);
-              this.consoleLog.info(`${alice.fromAddress} Signed TX`);
+              this.logger[chain].log(`${alice.fromAddress} Signed TX`);
             } catch (err) {
               reject(err);
             }
@@ -352,7 +371,7 @@ class Coordinator {
         })
       );
     } catch (err) {
-      this.consoleLog.error('ERROR: ', err);
+      this.logger[chain].error(err);
       await this.blameGame({ alices, chain });
       // await this.roundError(`Failed at signing: ${err.message}`);
       return;
@@ -363,15 +382,18 @@ class Coordinator {
         tx,
         signedTxs,
       });
-      await this.broadcastTx({ tx: serialized, chain });
-      this.consoleLog.info('Round Success');
+      const { error } = await this.broadcastTx({ tx: serialized, chain });
+      if (error) {
+        throw new Error(error);
+      }
+      this.logger[chain].log(`Round Succeded with ${actualAlices} users`);
       await this.asyncSend(alices, async alice => {
         if (typeof alice.connection.roundSuccess === 'function') {
           await alice.connection.roundSuccess({ txid, serialized, chain });
         }
       });
     } catch (err) {
-      this.consoleLog.error('ERROR: ', err);
+      this.logger[chain].error(err);
       await this.blameGame({ alices, chain, fault: err.addresses });
       // await this.roundError(
       //   `Failed at combining and broadcasting tx: ${err.message}`
@@ -382,23 +404,44 @@ class Coordinator {
   }
   async broadcastTx({ tx, chain }) {
     if (this.DEBUG_TEST_MODE) {
-      this.consoleLog.info('Did not Broadcasted Tx (Debug mode)', tx);
-      return { error: 'Did not Broadcasted Tx (Debug mode)' };
+      this.logger[chain].log('Did not Broadcasted Tx (Debug mode)', tx);
+      return {};
     } else if (chain && this.bitcoinUtils[chain]) {
       try {
-        await this.bitcoinUtils[chain].validateTx(tx);
-        this.consoleLog.info('Tx Validated');
+        const { addresses, utxos } = await this.bitcoinUtils[chain].validateTx(
+          tx
+        );
+        this.logger[chain].log('Tx Validated. Broadcasting Tx...', tx);
+        const res = await this.bitcoinUtils[chain].broadcastTx(tx);
+        this.logger[chain].log('Broadcasted Tx', res);
+        const txid = res.result;
+        await new Promise(resolve => setTimeout(() => resolve()), 1 * 1000); // Wait 1 second
+
+        try {
+          await this.bitcoinUtils[chain].validateTxUtxosAfterBroadcast({
+            addresses,
+            utxos,
+          });
+          this.logger[chain].log('Broadcasted Tx utxo verified');
+        } catch (err) {
+          this.logger[chain].error('Broadcasted Tx verify utxo error', err);
+        }
+        try {
+          await this.bitcoinUtils[chain].validateTxidAfterBroadcast({ txid });
+        } catch (err) {
+          this.logger[chain].error('Broadcasted Tx verify tx error', err);
+        }
+        return { txid, ...res };
       } catch (err) {
-        console.log(err);
-        this.consoleLog.error(`Tx is invalid: ${err.message}`);
-        return { error: `Could not send tx: ${err.message}` };
+        this.logger[chain].error(`Tx is invalid: ${err.message}`);
+        this.logger[chain].print(err);
+        return {
+          error: `Could not send tx: ${err.message}`,
+          addresses: err.addresses,
+        };
       }
-      this.consoleLog.info('Broadcasting Tx...', tx);
-      const res = await this.bitcoinUtils[chain].broadcastTx(tx);
-      this.consoleLog.info('Broadcasted Tx', res);
-      return res;
     } else {
-      this.consoleLog.info('Broadcast Tx does not support chain: ', chain);
+      this.logger.log('Broadcast Tx does not support chain:', chain);
       return { error: `Server does not support chain ${chain}` };
     }
   }
@@ -417,16 +460,19 @@ class Coordinator {
     round_chain,
     error,
   }) {
-    if (!this.bitcoinUtils[chain]) {
-      return { error: `Server does not support ${chain}` };
-    }
     if (error) {
-      console.log('Client responded with error: ', error);
+      if (error !== 'Wrong chain') {
+        this.logger[round_chain].log('Client responded with error: ', error);
+      }
       return;
     }
     if (version !== SERVER_VERSION) {
-      console.log('Client running version', version);
+      this.logger[round_chain].print('Client out of date', version);
       return { error: `Out of date. Update to version ${SERVER_VERSION}` };
+    }
+    if (!this.bitcoinUtils[chain]) {
+      this.logger.print(`Server does not support ${chain}`);
+      return { error: `Server does not support ${chain}` };
     }
     if (chain !== round_chain) {
       return; // Ignore
@@ -472,11 +518,10 @@ class Coordinator {
     if (response.error) {
       return response;
     } else if (balance < needed) {
-      return { ...response, error: 'Not enough Bitcoin in your Wallet' };
+      return { ...response, error: 'Not enough bitcoin to join round' };
     }
     if (!this.alices[chain][fromAddress]) {
-      // this.consoleLog.info(`User joined: ${fromAddress}`);
-      console.log(`User joined: ${fromAddress}`);
+      this.logger[chain].print(`User joined: ${fromAddress}`);
     }
     this.alices[chain][fromAddress] = {
       fromAddress,
@@ -499,7 +544,7 @@ class Coordinator {
 
     let responses;
     if (punish.length === 0) {
-      // this.consoleLog.error('Starting Blame Game');
+      // this.logger[chain].error('Starting Blame Game');
       responses = await this.asyncSend(alices, async alice => {
         try {
           const res = await alice.connection.blame();
@@ -585,7 +630,7 @@ class Coordinator {
           }
           previousOnions = nextOnions;
         } catch (err) {
-          console.log('ERROR: ', err);
+          this.logger[chain].error(err);
           punish.push(user.alice.fromAddress);
           if (err.breakForLoop) {
             break;
@@ -607,16 +652,11 @@ class Coordinator {
         this.punishedUsers[address] = (this.punishedUsers[address] || 0) + 1;
       }
     } else {
-      this.consoleLog.error(`Will not punish all users`);
+      this.logger[chain].error(`Will not punish all users`);
     }
 
     const error = `Round failed at state: ${this.roundParams[chain].state}`;
-    this.consoleLog.error(
-      'ERROR Blame Game: ',
-      error,
-      '. Punishing users: ',
-      punish
-    );
+    this.logger[chain].error('Blame Game:', error, 'Punishing users:', punish);
     await this.asyncSend(alices, async alice => {
       if (typeof alice.connection.roundSuccess === 'function') {
         await alice.connection.roundSuccess({ error, chain });

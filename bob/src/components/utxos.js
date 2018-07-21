@@ -31,6 +31,30 @@ class ComponentUtxo extends Component {
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ fontWeight: 'bold' }}>Type: </Text>
+                {!round.b && <Text>Spending change</Text>}
+                {!!round.b && <Text>CoinJoin transaction</Text>}
+              </View>
+              {round.b > 0 && (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ fontWeight: 'bold' }}>Bobs Mixed: </Text>
+                  <Text style={{}}>{round.b}</Text>
+                </View>
+              )}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ fontWeight: 'bold' }}>Amount: </Text>
+                <Text style={{}}>
+                  {formatSat(round.o, coinRate).bits},{' '}
+                  {formatSat(round.o, coinRate, true).usd}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ fontWeight: 'bold' }}>Address: </Text>
+                <Text style={{ flex: 1, fontSize: smallScreen ? 10 : 12 }}>
+                  {round.a}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text
                   style={{
                     fontSize: smallScreen ? 13 : 14,
@@ -56,31 +80,6 @@ class ComponentUtxo extends Component {
                   <Text style={{ flex: 1, fontSize: smallScreen ? 8 : 10 }}>
                     {round.f}
                   </Text>
-                </View>
-              )}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ fontWeight: 'bold' }}>Address: </Text>
-                <Text style={{ flex: 1, fontSize: smallScreen ? 10 : 12 }}>
-                  {round.a}
-                </Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ fontWeight: 'bold' }}>Amount: </Text>
-                <Text style={{}}>
-                  {formatSat(round.o, coinRate).bits},{' '}
-                  {formatSat(round.o, coinRate, true).usd}
-                </Text>
-              </View>
-              {round.b > 0 && (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ fontWeight: 'bold' }}>Bobs Mixed: </Text>
-                  <Text style={{}}>{round.b}</Text>
-                </View>
-              )}
-              {!round.b && (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ fontWeight: 'bold' }}>Type: </Text>
-                  <Text style={{}}>Private Wallet change</Text>
                 </View>
               )}
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>

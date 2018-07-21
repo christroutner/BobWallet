@@ -25,7 +25,7 @@ class HistoryView extends Component {
               No Previous Transactions.
             </Text>
             <Text style={{ color: colors.gray }}>
-              Send Bitcoin to the Public Wallet to get started.
+              Send bitcoin to your receiving address to get started.
             </Text>
           </View>
         )}
@@ -44,7 +44,7 @@ class HistoryView extends Component {
                   }}
                   style={{
                     padding: 6,
-                    margin: 3,
+                    margin: 5,
                     borderWidth: 0.5,
                     borderColor: colors.lightgray,
                   }}
@@ -54,34 +54,31 @@ class HistoryView extends Component {
                   )}
                   {!round.e &&
                     !!round.s && (
-                      <Text>
-                        Sent{' '}
+                      <Text style={{ fontSize: 17 }}>
                         <Text style={{ fontWeight: 'bold' }}>
-                          {formatSat(round.t, coinRate).usd}
+                          {formatSat(round.t, round.r || coinRate).usd}
                         </Text>{' '}
-                        to{'\n'}
-                        <Text style={{ fontSize: 12 }}>{round.s}</Text>
+                        Sent{'\n'}
+                        <Text style={{ fontSize: 12, color: colors.gray }}>
+                          {round.s}
+                        </Text>
                       </Text>
                     )}
                   {!round.e &&
                     !round.s && (
-                      <Text>
-                        Received{' '}
+                      <Text style={{ fontSize: 17 }}>
                         <Text style={{ fontWeight: 'bold' }}>
-                          {formatSat(round.o, coinRate).usd}
+                          {formatSat(round.o, round.r || coinRate).usd}
                         </Text>{' '}
-                        from Public Wallet
+                        Received{'\n'}
+                        <Text style={{ fontSize: 12, color: colors.gray }}>
+                          {round.b} bobs joined
+                        </Text>
                       </Text>
                     )}
-
-                  <View style={{ flexDirection: 'row' }}>
-                    {!round.e && (
-                      <Text>
-                        {!!round.b && <Text>{round.b} bobs mixed</Text>}{' '}
-                      </Text>
-                    )}
-                    <Text>{moment(round.d).fromNow()}</Text>
-                  </View>
+                  <Text style={{ fontSize: 12, color: colors.gray }}>
+                    {moment(round.d).fromNow()}
+                  </Text>
                 </TouchableOpacity>
               );
             }}

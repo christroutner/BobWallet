@@ -9,65 +9,32 @@ import { colors } from '../styles';
 class ComponentAddress extends Component {
   render() {
     const {
-      title,
       onPressUp,
       onPressDown,
       address,
-      // privateKey,
-      // onValueChange,
       value,
-      // derivePath,
-      // balance,
-      // ticker,
-      // wholeNumbers,
       flashMessage,
       disableIncrementor,
-      // date,
-      // bobs,
     } = this.props;
     const fontSize = smallScreen ? 12 : 16;
     return (
       <View
         style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <TouchableOpacity
-          onPress={() => {
-            Clipboard.setString(address);
-            flashMessage('Copied Address');
-          }}
+        <Text
           style={{
-            // width: 335,
-            // borderWidth: 0.5,
-            // borderColor: colors.lightgray,
-            // shadowRadius: 2,
-            // shadowOpacity: 0.5,
-            // shadowColor: colors.black,
-            // shadowOffset: { width: 1, height: 1 },
-            alignItems: 'center',
-            // justifyContent: 'center',
+            fontSize,
+            margin: 4,
+            marginTop: 12,
+            marginBottom: 12,
+            color: colors.gray,
           }}
         >
-          {/* <Text style={{ fontWeight: 'bold', fontSize: 20 }}>
-            {formatSat(balance, ticker, wholeNumbers)}
-          </Text> */}
-          <Text
-            style={{
-              fontSize,
-              margin: 4,
-              marginTop: 12,
-              marginBottom: 12,
-              color: colors.gray,
-            }}
-          >
-            {address}
-          </Text>
-          <Text style={{}}>{title}</Text>
-        </TouchableOpacity>
+          {address}
+        </Text>
 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity
@@ -78,7 +45,6 @@ class ComponentAddress extends Component {
             style={{
               width: 120,
               height: 120,
-              marginLeft: 10,
               backgroundColor: 'white',
             }}
           >
@@ -90,7 +56,6 @@ class ComponentAddress extends Component {
               onPressUp={() => onPressUp()}
               onPressDown={() => onPressDown()}
               value={value}
-              // onValueChange={text => onValueChange(text)}
               disabled={false}
             />
           )}

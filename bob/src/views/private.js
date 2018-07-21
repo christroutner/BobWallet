@@ -17,6 +17,7 @@ class PrivateView extends Component {
       flash: null,
       address: '',
       amount: 0,
+      showUsd: false,
       showUtxos: false,
       showQrScanner: false,
     };
@@ -33,6 +34,7 @@ class PrivateView extends Component {
     const {
       flash,
       amount,
+      showUsd,
       address,
       showUtxos,
       sending,
@@ -43,7 +45,7 @@ class PrivateView extends Component {
       computedMaxSend,
       computedPrivateBalance,
       coinRate,
-      settings: { feesPerTx },
+      settings: { feesPerByte },
     } = store;
 
     return (
@@ -59,16 +61,18 @@ class PrivateView extends Component {
                 alignSelf: 'center',
               }}
             >
-              {formatSat(computedPrivateBalance.get(), coinRate).usd}
+              ~ {formatSat(computedPrivateBalance.get(), coinRate).usd}
             </Text>
-            <Text
-              style={{
-                alignSelf: 'center',
-                color: colors.lightgray,
-              }}
-            >
-              {formatSat(computedPrivateBalance.get(), coinRate).bits}
-            </Text>
+            {!!coinRate && (
+              <Text
+                style={{
+                  alignSelf: 'center',
+                  color: colors.lightgray,
+                }}
+              >
+                ~ {formatSat(computedPrivateBalance.get(), coinRate).bits}
+              </Text>
+            )}
             <View style={{ marginTop: 6, flexDirection: 'row' }}>
               <Button
                 color={showUtxos ? colors.lightergray : colors.lightgray}
@@ -130,10 +134,10 @@ class PrivateView extends Component {
               <Text
                 style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 6 }}
               >
-                Private Wallet is Empty.
+                Spending Wallet is Empty.
               </Text>
               <Text style={{ color: colors.gray }}>
-                Send Bitcoin to the Public Wallet to get started.
+                Send bitcoin to your receiving address to get started.
               </Text>
             </View>
           )}
@@ -147,18 +151,20 @@ class PrivateView extends Component {
                   alignSelf: 'center',
                   fontWeight: 'bold',
                   margin: 6,
-                  color: colors.green,
+                  color: (flash && flash.color) || colors.green,
                 }}
               >
-                {flash}{' '}
+                {flash ? flash.msg : ' '}
               </Text>
 
               <View style={{ flex: 1 }} />
 
               <ComponentNumPad
-                onChange={amount => this.setState({ amount })}
+                onChange={(amount, showUsd) => {
+                  this.setState({ amount, showUsd });
+                }}
                 value={amount}
-                flash={msg => this.flash(msg)}
+                flash={msg => this.flash({ msg })}
                 max={computedMaxSend.get()}
                 rate={coinRate}
               />
@@ -197,8 +203,19 @@ class PrivateView extends Component {
                   }
                   onPress={() => {
                     const sendAmount = parseInt(amount, 10);
-                    const fees = parseInt(feesPerTx, 10);
+                    const fees = ActionsClient.calculateFee(feesPerByte);
                     const total = sendAmount + fees;
+
+                    const amountString = showUsd
+                      ? formatSat(sendAmount, coinRate).usd
+                      : formatSat(sendAmount, coinRate).bits;
+                    const minerString = showUsd
+                      ? formatSat(fees, coinRate).usd
+                      : formatSat(fees, coinRate).bits;
+                    const totalString = showUsd
+                      ? formatSat(total, coinRate).usd
+                      : formatSat(total, coinRate).bits;
+
                     setTimeout(() => {
                       const dustLimit = ActionsClient.dustLimit();
                       if (sendAmount < dustLimit) {
@@ -211,35 +228,37 @@ class PrivateView extends Component {
 
                       if (
                         window.confirm(`
-Do you want to send ${formatSat(sendAmount, coinRate, true).usd}   ${
-                          formatSat(sendAmount, coinRate).bits
-                        } to
+Do you want to send ${amountString} to
 ${address}
 
-Miner Fee: ${formatSat(fees, coinRate, true).usd}        ${
-                          formatSat(fees, coinRate).bits
-                        }
-Total:        ${formatSat(total, coinRate, true).usd}       ${
-                          formatSat(total, coinRate).bits
-                        }
+Miner Fee: ${minerString}
+         Total: ${totalString}
 `)
                       ) {
                         this.setState({ sending: true }, async () => {
                           try {
-                            await ActionsClient.sendTransaction({
+                            const result = await ActionsClient.sendTransaction({
                               amount: sendAmount,
                               toAddress: address,
-                              fees,
+                              fees: feesPerByte,
                             });
-                            clearTimeout(this.tsend);
-                            this.tsend = setTimeout(() => {
-                              this.setState({
-                                amount: 0,
-                                address: '',
-                                sending: false,
+                            if (result) {
+                              clearTimeout(this.tsend);
+                              this.tsend = setTimeout(() => {
+                                this.setState({
+                                  amount: 0,
+                                  address: '',
+                                  sending: false,
+                                });
+                              }, 500);
+                              this.flash({ msg: 'Transaction sent!' });
+                            } else {
+                              this.flash({
+                                msg: 'Transaction failed. Try again',
+                                color: colors.red,
                               });
-                            }, 500);
-                            this.flash('Transaction sent!');
+                              this.setState({ sending: false });
+                            }
                           } catch (err) {
                             alert(err.message);
                             this.setState({ sending: false });

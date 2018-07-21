@@ -22,7 +22,8 @@ export const BLOCK_TXID_URL = (chain, txid) => {
   if (chain === 'tBTC') {
     return `https://live.blockcypher.com/btc-testnet/tx/${txid}/`;
   } else {
-    return `https://test-bch-insight.bitpay.com/api/tx/${txid}`;
+    // return `https://test-bch-insight.bitpay.com/api/tx/${txid}`;
+    return `https://www.blocktrail.com/tBCC/tx/${txid}`;
   }
 };
 export const GITHUB_URL = 'https://github.com/BobWallet/BobWallet';

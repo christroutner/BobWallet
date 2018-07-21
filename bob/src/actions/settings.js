@@ -47,6 +47,9 @@ class ActionsSettings {
           const reader = new FileReader();
           reader.onload = event => {
             console.log('onload', event.target.result);
+            if (store.settings.publicSeed) {
+              this.downloadBackup();
+            }
             this.setBackup(event.target.result);
           };
           reader.readAsText(file);

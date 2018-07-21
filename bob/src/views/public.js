@@ -51,15 +51,17 @@ class PublicView extends Component {
         >
           {formatSat(balance, coinRate).usd}
         </Text>
-        <Text
-          style={{
-            marginTop: 4,
-            alignSelf: 'center',
-            color: colors.lightgray,
-          }}
-        >
-          {formatSat(balance, coinRate).bits}
-        </Text>
+        {!!coinRate && (
+          <Text
+            style={{
+              marginTop: 4,
+              alignSelf: 'center',
+              color: colors.lightgray,
+            }}
+          >
+            {formatSat(balance, coinRate).bits}
+          </Text>
+        )}
 
         <Text
           style={{
@@ -119,9 +121,10 @@ class PublicView extends Component {
                     // Linking.openURL(TESTNET_FAUCET_URL[chain]);
                   }}
                 />
-                {/* <Text style={{ color: colors.gray, marginTop: 10 }}>
-                  Need at least {formatSat(roundAmount, coinRate).bits} to join a round
-                </Text> */}
+                <Text style={{ color: colors.gray, marginTop: 10 }}>
+                  Need at least {formatSat(roundAmount, coinRate).usd} to join a
+                  round
+                </Text>
               </View>
             )}
         </View>

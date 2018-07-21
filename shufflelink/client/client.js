@@ -14,7 +14,9 @@ class Client {
 
     chain = 'tBTC',
     min_pool = 2,
-    max_fees = 10000,
+    max_fees = 100,
+    min_denomination = 1000,
+    max_denomination = 2100000000000000,
     version = 'unknown',
 
     callbackStateChange,
@@ -43,6 +45,8 @@ class Client {
 
     this.min_pool = min_pool;
     this.max_fees = max_fees;
+    this.min_denomination = min_denomination;
+    this.max_denomination = max_denomination;
     this.roundProgress = 0;
     this.roundError = null;
     this.roundState = CLIENT_STATES.unjoined;
@@ -156,13 +160,18 @@ class Client {
   }
 
   join(params) {
-    // TODO: Decline to join if user declines parameters
     const chain = this.chain;
     if (params.chain !== chain) {
       return { error: 'Wrong chain', chain };
     }
     if (params.fees > this.max_fees) {
       return { error: 'Fees are too high', chain };
+    }
+    if (params.denomination < this.min_denomination) {
+      return { error: 'Denomination too low', chain };
+    }
+    if (params.denomination > this.max_denomination) {
+      return { error: 'Denomination too high', chain };
     }
     this.setRoundError(); // Clear round error
     this.setState(CLIENT_STATES.joining);

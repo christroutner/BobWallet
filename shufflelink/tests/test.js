@@ -4,24 +4,9 @@ const test = require('tape');
 const Network = require('../dist/shufflelink/client/network').default;
 const Servers = require('../server/server');
 const version = require('../../package.json').version;
+const Config = require('../server/configuration');
 
 const CHAINS = ['tBTC', 'tBCH'];
-
-let CONFIG = {
-  // BCOIN_URI: 'localhost:18332',
-  // BCOIN_APIKEY: 'changeme',
-  SERVE_STATIC_APP: false,
-  // CHAIN: 'tBTC',
-  BCOIN: true,
-  BCASH: true,
-  LOG_TO_FILE: false,
-  MIN_POOL: 2,
-  MAX_POOL: 1000,
-  FEE_PER_INPUT: 10000,
-  OUTPUT_SAT: 100000,
-  PORT: 8089, // Different port for testing
-  TIMEOUT: 100,
-};
 
 const bcash = require('bcash');
 const Bitcoin = require('../dist/shufflelink/client/bitcoin_bcoin').default;
@@ -42,6 +27,7 @@ const bitcoinUtils = {
 test('1 Test socket.io', async t => {
   const NUM_OF_USERS = 10;
   t.plan(2 * (2 + NUM_OF_USERS));
+  const CONFIG = await Config.get(true);
   let server = new Servers({ bitcoinUtilsCore, bitcoinUtilsCash, CONFIG });
 
   for (const chain of CHAINS) {
@@ -94,6 +80,7 @@ test('1 Test socket.io', async t => {
 test('2 Test timeout', async t => {
   const NUM_OF_USERS = 3;
   t.plan(2 * (2 + NUM_OF_USERS + NUM_OF_USERS));
+  const CONFIG = await Config.get(true);
   let server = new Servers({
     bitcoinUtilsCore,
     bitcoinUtilsCash,
@@ -159,6 +146,7 @@ test('2 Test timeout', async t => {
 test('3 Test min_pool server', async t => {
   const NUM_OF_USERS = 2;
   t.plan(1 * 2);
+  const CONFIG = await Config.get(true);
   let server = new Servers({ bitcoinUtilsCore, bitcoinUtilsCash, CONFIG });
 
   for (const chain of CHAINS) {
@@ -207,6 +195,7 @@ test('3 Test min_pool server', async t => {
 test('4 Test min_pool client', async t => {
   const NUM_OF_USERS = 2;
   t.plan(2 * (1 + NUM_OF_USERS));
+  const CONFIG = await Config.get(true);
   let server = new Servers({ bitcoinUtilsCore, bitcoinUtilsCash, CONFIG });
 
   for (const chain of CHAINS) {
@@ -259,6 +248,7 @@ test('4 Test min_pool client', async t => {
 test('5 Test blame game shuffling', async t => {
   const NUM_OF_USERS = 10;
   t.plan(2 * 3);
+  const CONFIG = await Config.get(true);
   let server = new Servers({ bitcoinUtilsCore, bitcoinUtilsCash, CONFIG });
 
   for (const chain of CHAINS) {
@@ -309,6 +299,7 @@ test('5 Test blame game shuffling', async t => {
 test('6 Test blame game shuffle duplicate onions', async t => {
   const NUM_OF_USERS = 10;
   t.plan(2 * 3);
+  const CONFIG = await Config.get(true);
   let server = new Servers({ bitcoinUtilsCore, bitcoinUtilsCash, CONFIG });
 
   for (const chain of CHAINS) {
@@ -362,6 +353,7 @@ test('6 Test blame game shuffle duplicate onions', async t => {
 test('7 Test blame game shuffle invalid onions', async t => {
   const NUM_OF_USERS = 3;
   t.plan(2 * 3);
+  const CONFIG = await Config.get(true);
   let server = new Servers({ bitcoinUtilsCore, bitcoinUtilsCash, CONFIG });
 
   for (const chain of CHAINS) {
@@ -418,6 +410,7 @@ test('7 Test blame game shuffle invalid onions', async t => {
 test('8 Test not signing tx', async t => {
   const NUM_OF_USERS = 3;
   t.plan(2 * 3);
+  const CONFIG = await Config.get(true);
   let server = new Servers({ bitcoinUtilsCore, bitcoinUtilsCash, CONFIG });
 
   for (const chain of CHAINS) {

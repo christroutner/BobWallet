@@ -164,7 +164,7 @@ test('Test Create Transaction', async t => {
       vout: 1,
       satoshis: 124000000,
     }),
-    fees: 1000,
+    fees: 1,
     denomination: 10000,
     fromAddress: 'mzHAYhfXarP1gFkZkUDdGgYUFRmnts4m8b',
     toAddress: 'mxrMCger4XD1sAtdwvRLHz54EEdEjqmhPV',
@@ -173,7 +173,7 @@ test('Test Create Transaction', async t => {
   t.equal(index, 0);
   t.equal(
     tx.hash,
-    'a12e7f84f95636e37a902c4303e1bb840853212edde522477d1763a3a4dc48d9'
+    '7706956178c40e06dfcde0edb26f43a521ce7fb879615ccc37992f790e598b2d'
   );
   t.end();
 });
@@ -348,6 +348,213 @@ test('Test cashaddr normalize', async t => {
   const addr = 'bchtest:qpr7gquf5kqv8j4a60dqrg7n0z25yy5a2czq4hkald';
   const address = bitcoinUtils.normalizeAddress(addr);
   t.equal(address, 'mn55RMMwpgKedHD8VuoQtY5nTcGvcXtvyH');
+  t.end();
+});
+
+test('Test Transaction size', async t => {
+  t.plan(12);
+
+  // base tx 10 bytes
+  // every output is 34 bytes
+  // every input is 41 bytes
+  const baseSize = 10;
+  const outputSize = 34;
+  const inputSize = 41;
+  const sigSize = 107;
+
+  const addresses1 = bitcoinUtils.generateAddresses({
+    aliceSeed: seed1,
+    bobSeed: seed1,
+    aliceIndex: 0,
+    bobIndex: 0,
+  });
+  const addresses2 = bitcoinUtils.generateAddresses({
+    aliceSeed: seed1,
+    bobSeed: seed1,
+    aliceIndex: 2,
+    bobIndex: 1,
+  });
+
+  let tx = bitcoinUtils.createTransaction({
+    alices: [],
+    bobs: [],
+    utxos: [],
+    fees: 100,
+    denomination: 10000,
+    min_pool: 0,
+  });
+  t.equal(tx.size, 10);
+  t.equal(tx.size, baseSize); // 10 bytes
+
+  tx = bitcoinUtils.createTransaction({
+    alices: [
+      {
+        fromAddress: addresses1.fromAddress,
+        changeAddress: addresses1.changeAddress,
+      },
+    ],
+    bobs: [
+      {
+        toAddress: addresses1.toAddress,
+      },
+    ],
+    utxos: bitcoinUtils.getFakeUtxos({
+      address: addresses1.fromAddress,
+      txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
+      vout: 1,
+      satoshis: 124000000,
+    }),
+    fees: 100,
+    denomination: 10000,
+    fromAddress: addresses1.fromAddress,
+    toAddress: addresses1.toAddress,
+    min_pool: 1,
+  });
+  t.equal(tx.size, 119);
+  t.equal(tx.size, baseSize + 1 * inputSize + 2 * outputSize);
+
+  tx = bitcoinUtils.createTransaction({
+    alices: [
+      {
+        fromAddress: addresses1.fromAddress,
+        changeAddress: addresses1.changeAddress,
+      },
+      {
+        fromAddress: addresses2.fromAddress,
+        changeAddress: addresses2.changeAddress,
+      },
+    ],
+    bobs: [
+      {
+        toAddress: addresses1.toAddress,
+      },
+      {
+        toAddress: addresses2.toAddress,
+      },
+    ],
+    utxos: [
+      ...bitcoinUtils.getFakeUtxos({
+        address: addresses1.fromAddress,
+        txid:
+          'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
+        vout: 1,
+        satoshis: 124000000,
+      }),
+      ...bitcoinUtils.getFakeUtxos({
+        address: addresses2.fromAddress,
+        txid:
+          'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de41',
+        vout: 1,
+        satoshis: 124000000,
+      }),
+    ],
+    fees: 1000,
+    denomination: 10000,
+    fromAddress: addresses1.fromAddress,
+    toAddress: addresses1.toAddress,
+    min_pool: 1,
+  });
+  t.equal(tx.size, 228);
+  t.equal(tx.size, baseSize + 2 * inputSize + outputSize * 4);
+
+  const expectedFee = bitcoinUtils.calculateFeeSat({
+    users: 1,
+    inputs: 1,
+    outputs: 2,
+    fees: 1,
+  });
+  tx = bitcoinUtils.createTransaction({
+    alices: [
+      {
+        fromAddress: addresses1.fromAddress,
+        changeAddress: addresses1.changeAddress,
+      },
+    ],
+    bobs: [
+      {
+        toAddress: addresses1.toAddress,
+      },
+    ],
+    utxos: bitcoinUtils.getFakeUtxos({
+      address: addresses1.fromAddress,
+      txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
+      vout: 1,
+      satoshis: 10000 + expectedFee,
+    }),
+    fees: expectedFee,
+    denomination: 10000,
+    fromAddress: addresses1.fromAddress,
+    toAddress: addresses1.toAddress,
+    min_pool: 1,
+  });
+  t.equal(tx.size, 85);
+  t.equal(tx.size, baseSize + 1 * inputSize + 1 * outputSize);
+
+  tx = bitcoinUtils.createTransaction({
+    alices: [
+      {
+        fromAddress: addresses1.fromAddress,
+        changeAddress: addresses1.changeAddress,
+      },
+    ],
+    bobs: [
+      {
+        toAddress: addresses1.toAddress,
+      },
+    ],
+    utxos: [
+      ...bitcoinUtils.getFakeUtxos({
+        address: addresses1.fromAddress,
+        txid:
+          'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
+        vout: 1,
+        satoshis: 11000,
+      }),
+      ...bitcoinUtils.getFakeUtxos({
+        address: addresses1.fromAddress,
+        txid:
+          'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de41',
+        vout: 1,
+        satoshis: 11000,
+      }),
+    ],
+    fees: 10,
+    denomination: 10000,
+    fromAddress: addresses1.fromAddress,
+    toAddress: addresses1.toAddress,
+    min_pool: 1,
+  });
+  t.equal(tx.size, 160);
+  t.equal(tx.size, baseSize + 2 * inputSize + 2 * outputSize);
+
+  tx = bitcoinUtils.createTransaction({
+    alices: [
+      {
+        fromAddress: addresses1.fromAddress,
+        changeAddress: addresses1.changeAddress,
+      },
+    ],
+    bobs: [
+      {
+        toAddress: addresses1.toAddress,
+      },
+    ],
+    utxos: bitcoinUtils.getFakeUtxos({
+      address: addresses1.fromAddress,
+      txid: 'c89e09bf101ae825ad0f74382687c4d75f80359d480add6ee25d0effaec4de40',
+      vout: 1,
+      satoshis: 124000000,
+    }),
+    fees: 1,
+    denomination: 10000,
+    fromAddress: addresses1.fromAddress,
+    toAddress: addresses1.toAddress,
+    min_pool: 1,
+    key: addresses1.fromPrivate,
+  });
+  t.equal(tx.size, 226);
+  t.equal(tx.size, baseSize + 1 * inputSize + 2 * outputSize + 1 * sigSize);
+
   t.end();
 });
 

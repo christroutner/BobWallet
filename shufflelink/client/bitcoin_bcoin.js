@@ -84,6 +84,41 @@ class Bitcoin {
     return this.bcoin.primitives.Address.fromRaw(raw).toString();
   }
 
+  getChainCode() {
+    let coinChain = 1; // Testnet default
+    if (this.CHAIN === 'BTC') {
+      coinChain = 0;
+    } else if (this.CHAIN === 'BCH') {
+      coinChain = 145;
+    } else if (this.CHAIN === 'tBTC') {
+      coinChain = 1;
+    } else if (this.CHAIN === 'tBCH') {
+      coinChain = 145; // TODO: Testnet?
+    }
+    return coinChain;
+  }
+
+  generatePrivateChange({ seed, index }) {
+    if (typeof index !== 'number' || isNaN(index) || index < 0) {
+      throw new Error('Invalid indexe');
+    }
+    if (!seed || !this.isMnemonicValid(seed)) {
+      throw new Error('Invalid seed');
+    }
+    const mnemonic = new this.bcoin.hd.Mnemonic({ phrase: seed });
+    const master = this.bcoin.hd.from(mnemonic);
+    const coinChain = this.getChainCode();
+    const derive = `m/44'/${coinChain}'/0'/2/${index}`;
+    const derived = master.derivePath(derive);
+    const keyring = this.bcoin.primitives.KeyRing.fromKey(derived.privateKey);
+    const address = keyring.getKeyAddress('string');
+    // privateWIF = keyring.getPrivateKey('base58');
+    return {
+      address,
+      key: keyring,
+    };
+  }
+
   generateAddresses({
     aliceSeed,
     bobSeed,
@@ -114,16 +149,7 @@ class Bitcoin {
     const alice = new this.bcoin.hd.Mnemonic({ phrase: aliceSeed });
     const masterAlice = this.bcoin.hd.from(alice);
 
-    let coinChain = 1; // Testnet default
-    if (this.CHAIN === 'BTC') {
-      coinChain = 0;
-    } else if (this.CHAIN === 'BCH') {
-      coinChain = 145;
-    } else if (this.CHAIN === 'tBTC') {
-      coinChain = 1;
-    } else if (this.CHAIN === 'tBCH') {
-      coinChain = 145; // TODO: Testnet?
-    }
+    const coinChain = this.getChainCode();
 
     let toAddress;
     let toDerive;
@@ -279,6 +305,35 @@ class Bitcoin {
     }
     return true;
   }
+  async validateTxUtxosAfterBroadcast({ addresses, utxos }) {
+    const afterUtxos = await this.getUtxos(addresses);
+    const hashMap = {};
+    for (const utxo of utxos) {
+      hashMap[`${utxo.hash}.${utxo.index}`] = utxo;
+    }
+    const badAddresses = {};
+    for (const utxo of afterUtxos) {
+      const key = `${utxo.hash}.${utxo.index}`;
+      if (hashMap[key]) {
+        // utxo has not been spent
+        badAddresses[utxo.address] = true;
+      }
+    }
+    const badAddressArray = Object.keys(badAddresses);
+    if (badAddressArray.length > 0) {
+      const error = new Error(`TX broadcast may have failed`);
+      error.addresses = badAddressArray;
+      error.utxos = afterUtxos;
+      throw error;
+    }
+  }
+  async validateTxidAfterBroadcast({ txid }) {
+    try {
+      await this.getTx(txid);
+    } catch (err) {
+      throw new Error(`Missing txid: ${txid}`);
+    }
+  }
 
   getUtxos(address) {
     return this.getUtxosBcoin(address);
@@ -307,7 +362,7 @@ class Bitcoin {
             if (!utxosMap[hash] || utxosMap[hash].height < utxo.height) {
               utxosMap[hash] = utxo;
             } else {
-              console.log('Duplicate utxo', utxo);
+              // console.log('Duplicate utxo', utxo);
             }
           }
           utxosMap = Object.values(utxosMap);
@@ -320,6 +375,19 @@ class Bitcoin {
     return new Promise((resolve, reject) => {
       axios({
         url: `/`,
+        method: 'GET',
+        baseURL: `http://x:${this.APIKEY}@${this.URI}`,
+      })
+        .then(res => {
+          resolve(res.data);
+        })
+        .catch(reject);
+    });
+  }
+  getTx(txid) {
+    return new Promise((resolve, reject) => {
+      axios({
+        url: `/tx/${txid}`,
         method: 'GET',
         baseURL: `http://x:${this.APIKEY}@${this.URI}`,
       })
@@ -344,6 +412,21 @@ class Bitcoin {
         .then(res => resolve(res.data))
         .catch(reject);
     });
+  }
+
+  calculateFeeSat({ users, inputs, outputs, fees }) {
+    const baseSize = 10;
+    const outputSize = 34;
+    const inputSize = 41;
+    const sigSize = 107;
+    const baseFee = users > 0 ? Math.ceil(baseSize / users) : 0;
+    const result =
+      fees * (baseFee + outputSize * outputs + (inputSize + sigSize) * inputs);
+    if (isNaN(result)) {
+      console.log(users, inputs, outputs, fees, result);
+      throw new Error('Invalid fee calculation');
+    }
+    return result;
   }
 
   createTransaction({
@@ -435,7 +518,12 @@ class Bitcoin {
         (previous, utxo) => previous + parseInt(utxo.value, 10),
         0
       );
-      const aliceFees = fees * alice.utxos.length;
+      const aliceFees = this.calculateFeeSat({
+        users: alices.length,
+        inputs: alice.utxos.length,
+        outputs: 2,
+        fees,
+      });
       const change = totalSatoshis - denomination - aliceFees;
       totalIn += totalSatoshis;
       alice.utxos.map(utxo => tx.addCoin(utxo));
@@ -513,6 +601,7 @@ class Bitcoin {
     // console.log('signed tx', tx.toJSON())
     return {
       tx: tx.toJSON(),
+      size: tx.getSize(),
       // tx: tx.toTX(),
       serialized,
       totalChange,
@@ -570,7 +659,7 @@ class Bitcoin {
       error.addresses = addressArray;
       throw error;
     }
-    return true;
+    return { addresses, utxos };
   }
 
   // Server only

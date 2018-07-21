@@ -45,7 +45,7 @@ class ActionsClient {
     store.clear();
   }
   processBalance(data = {}) {
-    const { address, balance, needed, fees, rate } = data;
+    const { address, balance, needed, fees, rate, chain } = data;
     if (address) {
       store.addressBalances.set(address, balance);
       store.saveBalances();
@@ -54,10 +54,10 @@ class ActionsClient {
       store.roundAmount = needed;
     }
     if (fees) {
-      store.settings.feesPerTx = fees;
+      store.settings.feesPerByte = fees;
       store.save();
     }
-    if (rate) {
+    if (rate && chain === store.settings.chain) {
       store.coinRate = rate;
     }
   }
@@ -166,16 +166,30 @@ class ActionsClient {
     this.connect();
   }
   isValidSeed(seed) {
-    return bitcoinUtils[store.settings.chain].isMnemonicValid(seed);
+    return this.bitcoinUtils().isMnemonicValid(seed);
   }
   isValidXPub(key) {
-    return bitcoinUtils[store.settings.chain].isXPubValid(key);
+    return this.bitcoinUtils().isXPubValid(key);
   }
   isInvalid(address) {
-    return bitcoinUtils[store.settings.chain].isInvalid(address);
+    return this.bitcoinUtils().isInvalid(address);
   }
   newMnemonic() {
-    return bitcoinUtils[store.settings.chain].newMnemonic();
+    return this.bitcoinUtils().newMnemonic();
+  }
+  calculateFeeSat(params) {
+    return this.bitcoinUtils().calculateFeeSat(params);
+  }
+  calculateFee(fees) {
+    return this.calculateFeeSat({
+      users: 1,
+      inputs: 1,
+      outputs: 1,
+      fees,
+    });
+  }
+  bitcoinUtils() {
+    return bitcoinUtils[store.settings.chain];
   }
   updateKeyIndexes({
     publicIndex = store.settings.publicIndex,
@@ -203,20 +217,21 @@ class ActionsClient {
     store.roundInfo = store.bobClient ? store.bobClient.getRoundInfo() : {};
   }
   async sendTransaction({ amount, toAddress, fees, broadcast = true }) {
-    const total = amount + fees;
+    const total = amount + this.calculateFee(fees);
     const {
+      coinRate,
       roundInfo,
       bobClient,
       completedRounds,
       computedAvailableUtxos,
-      settings: { privateSeed, publicSeed, chain },
+      settings: { privateSeed, publicSeed, chain, changeIndex },
     } = store;
     if (!roundInfo || !bobClient) {
       throw new Error('Something went wrong');
     }
     // bobClient.disconnect();
+    let roundOrig;
     try {
-      let roundOrig;
       let round;
       for (const rnd of computedAvailableUtxos.get()) {
         round = maxifyRound(rnd);
@@ -234,15 +249,25 @@ class ActionsClient {
       console.log('Spending utxo', utxo, round);
 
       // Get spending key
-      const { toPrivate } = bitcoinUtils[chain].generateAddresses({
-        aliceSeed: publicSeed,
-        bobSeed: privateSeed,
-        bobIndex: round.privateIndex,
-      });
-
-      // TODO: Use address in different address space than the Private Wallet
-      const changeAddress = roundInfo.toAddress;
-      const privateIndex = roundInfo.bobIndex;
+      let key;
+      if (round.sentAddress) {
+        const { key: changeKey } = bitcoinUtils[chain].generatePrivateChange({
+          seed: privateSeed,
+          index: changeIndex,
+        });
+        key = changeKey;
+      } else {
+        const { toPrivate } = bitcoinUtils[chain].generateAddresses({
+          aliceSeed: publicSeed,
+          bobSeed: privateSeed,
+          bobIndex: round.privateIndex,
+        });
+        key = toPrivate;
+      }
+      const toChangeIndex = changeIndex + 1;
+      const { address: changeAddress } = bitcoinUtils[
+        chain
+      ].generatePrivateChange({ seed: privateSeed, index: toChangeIndex });
 
       const txObj = {
         max_fees: bobClient.max_fees,
@@ -260,7 +285,7 @@ class ActionsClient {
         utxos: [utxo],
         fees,
         denomination: amount,
-        key: toPrivate,
+        key,
         fromAddress,
         toAddress,
         changeAddress,
@@ -268,9 +293,12 @@ class ActionsClient {
       };
       console.log('TX', txObj);
 
-      const { tx, serialized, changeIndex, totalChange } = await bitcoinUtils[
-        chain
-      ].createTransaction(txObj);
+      const {
+        tx,
+        serialized,
+        changeIndex: index,
+        totalChange,
+      } = await bitcoinUtils[chain].createTransaction(txObj);
       console.log('CREATED TX');
       let txid = tx.hash;
       // let broadcasted = false;
@@ -281,7 +309,9 @@ class ActionsClient {
           console.log('Boadcast tx response', res);
 
           if (res.error) {
-            throw new Error(res.error);
+            const err = new Error(res.error);
+            err.addresses = res.addresses;
+            throw err;
           }
           if (!txid) {
             throw new Error('Missing txid');
@@ -299,20 +329,19 @@ class ActionsClient {
 
       let newUtxo;
       if (totalChange > 0) {
-        this.updateKeyIndexes({
-          privateIndex: store.settings.privateIndex + 1,
-        });
         newUtxo = minifyRound({
           address: changeAddress,
           amount: totalChange,
-          index: changeIndex,
-          privateIndex,
+          index,
+          privateIndex: changeIndex,
           sentAddress: toAddress,
           sentAmount: amount,
           fromTxid: round.txid,
           txid,
           date: new Date().getTime(),
         });
+        store.settings.changeIndex = toChangeIndex;
+        store.save();
       } else {
         console.log('No change utxo');
         newUtxo = minifyRound({
@@ -323,6 +352,9 @@ class ActionsClient {
           date: new Date().getTime(),
         });
       }
+      if (coinRate) {
+        newUtxo.r = coinRate;
+      }
 
       console.log('New utxo', newUtxo);
       completedRounds.unshift(newUtxo);
@@ -330,8 +362,23 @@ class ActionsClient {
       store.saveRounds();
       return serialized;
     } catch (err) {
-      bobClient.connect();
-      throw err;
+      // bobClient.connect();
+      if (roundOrig && err.addresses && err.addresses.length > 0) {
+        const result = window.confirm(`
+Transaction Failed
+
+Invalid utxo address: ${roundOrig.a}
+
+Do you want to mark it as spent?
+`);
+        if (result) {
+          // Mark as spent
+          roundOrig.u = true;
+          store.saveRounds();
+        }
+      } else {
+        throw err;
+      }
     }
     // bobClient.connect();
   }

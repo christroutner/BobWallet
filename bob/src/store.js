@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS = {
   privateSeed: null,
   publicIndex: 0,
   privateIndex: 0,
+  changeIndex: 0,
 
   serverAddress: SERVER,
   chain: DEFAULT_CHAIN,
@@ -26,7 +27,7 @@ const DEFAULT_SETTINGS = {
   successfulRounds: 0,
   failedRounds: 0,
   totalFees: 0,
-  feesPerTx: null,
+  feesPerByte: null,
 
   created: new Date().getTime(),
 };
