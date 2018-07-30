@@ -67,7 +67,7 @@ test('1 Test socket.io', async t => {
     const success = await server.start({ chain });
     t.true(success);
     for (const client of Clients) {
-      client.disconnect();
+      await client.disconnect();
     }
     Clients = null;
     t.equal(1, 1);
@@ -133,7 +133,7 @@ test('2 Test timeout', async t => {
     const success = await server.start({ chain });
     t.false(success);
     for (const client of Clients) {
-      client.disconnect();
+      await client.disconnect();
     }
     Clients = null;
     t.equal(1, 1);
@@ -183,7 +183,7 @@ test('3 Test min_pool server', async t => {
     const success = await server.start({ chain });
     t.false(success);
     for (const client of Clients) {
-      client.disconnect();
+      await client.disconnect();
     }
     Clients = null;
   }
@@ -235,7 +235,7 @@ test('4 Test min_pool client', async t => {
     const success = await server.start({ chain });
     t.false(success);
     for (const client of Clients) {
-      client.disconnect();
+      await client.disconnect();
     }
     Clients = null;
   }
@@ -287,7 +287,7 @@ test('5 Test blame game shuffling', async t => {
       1
     );
     for (const client of Clients) {
-      client.disconnect();
+      await client.disconnect();
     }
     Clients = null;
   }
@@ -341,7 +341,7 @@ test('6 Test blame game shuffle duplicate onions', async t => {
       1
     );
     for (const client of Clients) {
-      client.disconnect();
+      await client.disconnect();
     }
     Clients = null;
   }
@@ -398,7 +398,7 @@ test('7 Test blame game shuffle invalid onions', async t => {
       1
     );
     for (const client of Clients) {
-      client.disconnect();
+      await client.disconnect();
     }
     Clients = null;
   }
@@ -451,7 +451,7 @@ test('8 Test not signing tx', async t => {
       1
     );
     for (const client of Clients) {
-      client.disconnect();
+      await client.disconnect();
     }
     Clients = null;
   }

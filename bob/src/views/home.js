@@ -14,7 +14,7 @@ import { smallScreen } from '../helpers';
 class Home extends Component {
   render() {
     const {
-      settings: { routeTab },
+      settings: { routeTab, chain },
     } = store;
     return (
       <View style={{ flex: 1 }}>
@@ -92,7 +92,9 @@ class Home extends Component {
                 transform: [{ rotate: '16deg' }],
               }}
             >
-              <Text style={{ fontSize: 10, fontFamily: 'Courier' }}>Beta</Text>
+              <Text style={{ fontSize: 10, fontFamily: 'Courier' }}>
+                {chain}
+              </Text>
             </View>
           </View>
         </View>

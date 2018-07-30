@@ -7,7 +7,13 @@ async function get(debugMode) {
   let CONFIG;
   if (debugMode) {
     CONFIG = require('../../config.example.json');
-    CONFIG.PORT = 10374;
+    CONFIG.PORT = 10374; // Random port
+    CONFIG.BCASH = true;
+    CONFIG.BCOIN = true;
+    CONFIG.TESTNET = true;
+    CONFIG.LOG_TO_FILE = false;
+    CONFIG.LETSENCRYPT_SSL = false;
+    CONFIG.FETCH_RATES = false;
     return CONFIG;
   }
   try {

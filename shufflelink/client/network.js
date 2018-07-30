@@ -33,7 +33,11 @@ class Network extends Client {
     });
     return res.json();
   }
-  connect() {
+  async connect() {
+    await this.disconnect();
+    return this.connectToServer();
+  }
+  connectToServer() {
     return new Promise(resolve => {
       this.isConnecting = true;
       this.isConnected = false;
@@ -93,16 +97,16 @@ class Network extends Client {
     this.roundParams = null;
     this.roundError = null;
   }
-  disconnect() {
+  async disconnect() {
     if (this.socket) {
-      // this.socket.disconnect();
-      this.socket.destroy();
+      await this.socket.disconnect();
+      await this.socket.destroy();
       this.socket = null;
     }
     this.disconnected();
   }
-  setServer(serverAddress) {
-    this.disconnect();
+  async setServer(serverAddress) {
+    await this.disconnect();
     try {
       this.serverAddress = normalizeUrl(serverAddress);
     } catch (err) {

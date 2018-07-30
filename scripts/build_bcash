@@ -6,7 +6,7 @@ rm -f ./bob/public/bcash-worker.js
 
 git clone https://github.com/bcoin-org/bcash.git
 cd ./bcash
-git checkout 8621c38c5d9f498da1abb355d4a23b21db0e3764
+git checkout 4210033b8a8237b76d1696cf63e4cd6a402a412c
 npm install
 npm run webpack-browser
 cd ..

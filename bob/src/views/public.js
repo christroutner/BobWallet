@@ -113,14 +113,16 @@ class PublicView extends Component {
           {roundAmount &&
             roundAmount > balance && (
               <View style={{ marginTop: 14, alignItems: 'center' }}>
-                <Button
-                  color={colors.green}
-                  title="Get Testnet Bitcoins Here"
-                  onPress={() => {
-                    window.open(TESTNET_FAUCET_URL[chain], '_blank');
-                    // Linking.openURL(TESTNET_FAUCET_URL[chain]);
-                  }}
-                />
+                {!!TESTNET_FAUCET_URL[chain] && (
+                  <Button
+                    color={colors.green}
+                    title="Get Testnet Bitcoins Here"
+                    onPress={() => {
+                      window.open(TESTNET_FAUCET_URL[chain], '_blank');
+                      // Linking.openURL(TESTNET_FAUCET_URL[chain]);
+                    }}
+                  />
+                )}
                 <Text style={{ color: colors.gray, marginTop: 10 }}>
                   Need at least {formatSat(roundAmount, coinRate).usd} to join a
                   round

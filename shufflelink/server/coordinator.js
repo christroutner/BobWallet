@@ -24,8 +24,8 @@ class Coordinator {
     this.bitcoinUtils = {
       tBTC: bitcoinUtilsCore,
       tBCH: bitcoinUtilsCash,
-      BTC: null,
-      BCH: null,
+      BTC: bitcoinUtilsCore,
+      BCH: bitcoinUtilsCash,
     };
     this.tstart = {};
     this.DEBUG_TEST_MODE = DEBUG_TEST_MODE;
@@ -48,10 +48,25 @@ class Coordinator {
     };
     this.PUBLIC_KEY_LENGTH = Shuffle.generateKey().getPublicKey().length;
     if (!DEBUG_TEST_MODE) {
-      this.logger.tBTC.log('Starting using config:', this.CONFIG);
-      this.logger.tBCH.log('Starting using config:', this.CONFIG);
-      if (bitcoinUtilsCore) this.loopStart('tBTC');
-      if (bitcoinUtilsCash) this.loopStart('tBCH');
+      if (CONFIG.TESTNET) {
+        if (bitcoinUtilsCore) {
+          this.logger.tBTC.log('Starting using config:', this.CONFIG);
+          this.loopStart('tBTC');
+        }
+        if (bitcoinUtilsCash) {
+          this.logger.tBCH.log('Starting using config:', this.CONFIG);
+          this.loopStart('tBCH');
+        }
+      } else {
+        if (bitcoinUtilsCore) {
+          this.logger.BTC.log('Starting using config:', this.CONFIG);
+          this.loopStart('BTC');
+        }
+        if (bitcoinUtilsCash) {
+          this.logger.BCH.log('Starting using config:', this.CONFIG);
+          this.loopStart('BCH');
+        }
+      }
     }
     this.chainRates = {
       BTC: null,
@@ -158,12 +173,11 @@ class Coordinator {
       } catch (err) {
         return {
           error: `Something went wrong checking balance: ${err.message}`,
+          chain,
         };
       }
-    } else if (!this.bitcoinUtils[chain]) {
-      return { error: `Invalid chain: ${chain}` };
     } else {
-      return { error: 'Invalid address' };
+      return { error: `Server does not support: ${chain}`, chain };
     }
   }
 
@@ -249,8 +263,11 @@ class Coordinator {
       });
       if (obj && obj.error) {
         // this.logger[chain].print(obj.address, obj.error, obj.balance);
-        if (obj.error !== 'Not enough bitcoin to join round') {
-          this.logger[chain].print(obj.address, obj.error);
+        if (
+          obj.error !== 'Not enough bitcoin to join round' &&
+          obj.error.indexOf('Out of date.') !== 0
+        ) {
+          this.logger[chain].print(obj.address || '', obj.error);
         }
         if (typeof connection.roundError === 'function') {
           connection.roundError({ ...obj, chain: res.chain });

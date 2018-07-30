@@ -1,21 +1,27 @@
 import store from '../store';
 import { observe, action } from 'mobx';
-import { VERSION } from '../config';
+import { VERSION, SERVER } from '../config';
 import { minifyRound, maxifyRound } from '../helpers';
 
 import Client from '../shufflelink/network';
 import Bitcoin from '../shufflelink/bitcoin_bcoin';
-const bitcoinUtilsCore = new Bitcoin({
-  CHAIN: 'tBTC',
-  bcoin: window.bcoin,
-});
-const bitcoinUtilsCash = new Bitcoin({
-  CHAIN: 'tBCH',
-  bcoin: window.bcash,
-});
 const bitcoinUtils = {
-  tBTC: bitcoinUtilsCore,
-  tBCH: bitcoinUtilsCash,
+  tBTC: new Bitcoin({
+    CHAIN: 'tBTC',
+    bcoin: window.bcoin,
+  }),
+  tBCH: new Bitcoin({
+    CHAIN: 'tBCH',
+    bcoin: window.bcash,
+  }),
+  BTC: new Bitcoin({
+    CHAIN: 'BTC',
+    bcoin: window.bcoin,
+  }),
+  BCH: new Bitcoin({
+    CHAIN: 'BCH',
+    bcoin: window.bcash,
+  }),
 };
 
 class ActionsClient {
@@ -29,6 +35,7 @@ class ActionsClient {
     if (!this.isValidSeed(seed)) {
       throw new Error('Invalid seed');
     }
+    store.settings.serverAddress = SERVER[chain];
     store.settings.publicSeed = seed;
     store.settings.privateSeed = seed;
     store.settings.routeTab = 'Public';
@@ -37,15 +44,14 @@ class ActionsClient {
     this.initAlice({});
 
     store.route = 'Home';
-    this.connect();
   }
-  clearAlice() {
-    this.disconnect();
+  async clearAlice() {
+    await this.disconnect();
     store.bobClient = null;
     store.clear();
   }
   processBalance(data = {}) {
-    const { address, balance, needed, fees, rate, chain } = data;
+    const { address, balance, needed, fees, rate, chain, error } = data;
     if (address) {
       store.addressBalances.set(address, balance);
       store.saveBalances();
@@ -60,6 +66,9 @@ class ActionsClient {
     if (rate && chain === store.settings.chain) {
       store.coinRate = rate;
     }
+    if (chain === store.settings.chain && error) {
+      store.roundError = error;
+    }
   }
   initAlice({
     chain = store.settings.chain,
@@ -70,6 +79,7 @@ class ActionsClient {
     serverAddress = store.settings.serverAddress,
   }) {
     if (!publicSeed || !privateSeed) return;
+    console.log('Creating new Bob Wallet client!');
 
     store.bobClient = new Client({
       chain,
@@ -158,12 +168,14 @@ class ActionsClient {
     store.route = 'Home';
     this.connect();
   }
-  updateServer(address) {
+  async updateServer(address) {
     // store.settings.serverAddress = address.replace(/(http:\/\/.*)\//i, '$1');
     store.settings.serverAddress = address;
     store.save();
-    store.bobClient && store.bobClient.setServer(address);
-    this.connect();
+    if (store.bobClient) {
+      await store.bobClient.setServer(address);
+    }
+    await this.connect();
   }
   isValidSeed(seed) {
     return this.bitcoinUtils().isMnemonicValid(seed);
@@ -207,11 +219,15 @@ class ActionsClient {
     store.save();
     this.getRoundInfo();
   }
-  disconnect() {
-    store.bobClient && store.bobClient.disconnect();
+  async disconnect() {
+    if (store.bobClient) {
+      await store.bobClient.disconnect();
+    }
   }
-  connect() {
-    store.bobClient && store.bobClient.connect();
+  async connect() {
+    if (store.bobClient) {
+      await store.bobClient.connect();
+    }
   }
   getRoundInfo() {
     store.roundInfo = store.bobClient ? store.bobClient.getRoundInfo() : {};

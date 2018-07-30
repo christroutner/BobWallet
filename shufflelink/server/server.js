@@ -10,7 +10,14 @@ class Server extends Coordinator {
     super(params);
 
     const {
-      CONFIG: { SERVE_STATIC_APP, PRODUCTION, EMAIL, PROD_URLS, PORT, TIMEOUT },
+      CONFIG: {
+        SERVE_STATIC_APP,
+        LETSENCRYPT_SSL,
+        LETSENCRYPT_EMAIL,
+        LETSENCRYPT_URLS,
+        PORT,
+        TIMEOUT,
+      },
     } = params;
 
     app.use(cors());
@@ -31,13 +38,13 @@ class Server extends Coordinator {
       app.get('/', (req, res) => {
         res.sendFile(path.join(__dirname, '../../bobwallet.html'), err => {
           !err && this.logger.log('Sent index.html');
-          !!err && this.logger.error('Error sending index.html ', err);
+          !!err && this.logger.error('Error sending index.html', err);
         });
       });
     }
 
     let server;
-    if (PRODUCTION) {
+    if (LETSENCRYPT_SSL) {
       this.logger.log('Running Production');
       const greenlock = require('greenlock-express').create({
         // Let's Encrypt v2 is ACME draft 11
@@ -45,9 +52,9 @@ class Server extends Coordinator {
         server: 'https://acme-v02.api.letsencrypt.org/directory',
         // server: 'https://acme-staging-v02.api.letsencrypt.org/directory',
         // Note: If at first you don't succeed, switch to staging to debug
-        email: EMAIL,
+        email: LETSENCRYPT_EMAIL,
         agreeTos: true,
-        approveDomains: PROD_URLS,
+        approveDomains: LETSENCRYPT_URLS,
         // You MUST have access to write to directory where certs are saved
         // ex: /home/foouser/acme/etc
         configDir: require('path').join(require('os').homedir(), 'acme', 'etc'),
@@ -104,7 +111,7 @@ class Server extends Coordinator {
       });
     });
 
-    this.logger.log('Listening on ', PRODUCTION ? '80 and 443' : PORT);
+    this.logger.log('Listening on', LETSENCRYPT_SSL ? '80 and 443' : PORT);
   }
   exit() {
     return new Promise(resolve => {

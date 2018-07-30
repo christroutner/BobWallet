@@ -2,13 +2,7 @@ import { AsyncStorage } from 'react-native';
 import { extendObservable, observable } from 'mobx';
 import ComputedWallet from './computed/wallet';
 
-import {
-  DEFAULT_ROUTE,
-  DEFAULT_TAB,
-  SERVER,
-  VERSION,
-  DEFAULT_CHAIN,
-} from './config';
+import { DEFAULT_ROUTE, DEFAULT_TAB, VERSION, DEFAULT_CHAIN } from './config';
 
 const DEFAULT_SETTINGS = {
   version: VERSION,
@@ -20,7 +14,7 @@ const DEFAULT_SETTINGS = {
   privateIndex: 0,
   changeIndex: 0,
 
-  serverAddress: SERVER,
+  serverAddress: '',
   chain: DEFAULT_CHAIN,
 
   lastBackup: null,

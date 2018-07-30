@@ -96,10 +96,10 @@ class Settings extends Component {
             title={deleteWallet ? 'Are you sure you want to reset?' : 'Reset'}
             onPress={() => {
               if (deleteWallet) {
-                ActionsSettings.copyBackup();
+                // ActionsSettings.copyBackup();
                 ActionsSettings.downloadBackup();
                 ActionsClient.clearAlice();
-                this.flash('Copied Backup to Clipboard.');
+                // this.flash('Copied Backup to Clipboard.');
               } else {
                 this.setState({ deleteWallet: true });
               }

@@ -6,28 +6,39 @@ const cashaddr = require('cashaddrjs');
 const MAPPER = {
   tBTC: 'testnet',
   tBCH: 'testnet',
-  BTC: 'mainnet',
-  BCH: 'mainnet',
+  BTC: 'main',
+  BCH: 'main',
 };
 
 class Bitcoin {
   constructor({ CHAIN = 'tBTC', URI, APIKEY, bcoin, DUST_LIMIT = 546 }) {
     this.bcoin = bcoin;
-    this.bcoin.set(MAPPER[CHAIN]);
+    this.NETWORK = MAPPER[CHAIN];
+    try {
+      this.enforceNetwork();
+    } catch (err) {
+      console.log('Invalid chain', CHAIN, this.NETWORK);
+      throw err;
+    }
     this.CHAIN = CHAIN;
     this.URI = URI;
     this.APIKEY = APIKEY;
-    this.NETWORK = MAPPER[CHAIN];
+
     this.DUST_LIMIT = DUST_LIMIT;
 
-    if (this.NETWORK === 'mainnet') {
+    if (this.NETWORK === 'main') {
       this.BITCOINJS_NETWORK = bitcoin.networks.bitcoin;
     } else {
       this.BITCOINJS_NETWORK = bitcoin.networks.testnet;
     }
   }
 
+  enforceNetwork() {
+    this.bcoin.set(this.NETWORK);
+  }
+
   newMnemonic(seed) {
+    this.enforceNetwork();
     const mn = new this.bcoin.hd.Mnemonic({ phrase: seed });
     return mn.toString();
   }
@@ -41,6 +52,7 @@ class Bitcoin {
     }
   }
   isXPubValid(pubKey) {
+    this.enforceNetwork();
     if (!pubKey) return false;
     try {
       const key = this.bcoin.hd.from(pubKey);
@@ -50,6 +62,7 @@ class Bitcoin {
     }
   }
   normalizeAddress(address) {
+    this.enforceNetwork();
     try {
       const decoded = cashaddr.decode(address);
       address = this.bcoin.primitives.Address.fromHash(
@@ -61,6 +74,7 @@ class Bitcoin {
     return address;
   }
   isInvalid(address) {
+    this.enforceNetwork();
     // address = this.normalizeAddress(address);
     try {
       // address = address.toString();
@@ -74,12 +88,14 @@ class Bitcoin {
     }
   }
   addressToHex(address) {
+    this.enforceNetwork();
     // address = this.normalizeAddress(address);
     return this.bcoin.primitives.Address.fromString(address)
       .toRaw()
       .toString('hex');
   }
   hexToAddress(hex) {
+    this.enforceNetwork();
     const raw = Buffer.from(hex, 'hex');
     return this.bcoin.primitives.Address.fromRaw(raw).toString();
   }
@@ -99,6 +115,7 @@ class Bitcoin {
   }
 
   generatePrivateChange({ seed, index }) {
+    this.enforceNetwork();
     if (typeof index !== 'number' || isNaN(index) || index < 0) {
       throw new Error('Invalid indexe');
     }
@@ -126,6 +143,7 @@ class Bitcoin {
     aliceIndex = 0,
     changeIndex,
   }) {
+    this.enforceNetwork();
     bobIndex = parseInt(bobIndex, 10);
     aliceIndex = parseInt(aliceIndex, 10);
     changeIndex =
@@ -228,6 +246,7 @@ class Bitcoin {
     return signature.toString('base64');
   }
   getScriptForAddress(address) {
+    this.enforceNetwork();
     return new this.bcoin.script.Script().fromAddress(address).toJSON();
   }
   getFakeUtxos({ address, txid, vout, satoshis }) {
@@ -442,6 +461,7 @@ class Bitcoin {
     min_pool,
     max_fees,
   }) {
+    this.enforceNetwork();
     console.log('Constructing TX...');
     // fromAddress = this.normalizeAddress(fromAddress);
 
@@ -612,6 +632,7 @@ class Bitcoin {
   }
 
   async validateTx(tx) {
+    this.enforceNetwork();
     tx = this.bcoin.primitives.TX.fromRaw(tx, 'hex');
     if (!tx.isStandard()) {
       const error = new Error('Tx is not standard');
@@ -664,6 +685,7 @@ class Bitcoin {
 
   // Server only
   combineTxs({ tx, signedTxs }) {
+    this.enforceNetwork();
     // console.log('BEFORE', tx.inputs, signedTxs.map(tx => tx.inputs));
     // tx = this.bcoin.primitives.TX.fromRaw(tx, 'hex');
     // signedTxs = signedTxs.map(tx =>

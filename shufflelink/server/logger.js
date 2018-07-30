@@ -54,8 +54,16 @@ function gen(type, path) {
 
 class logger {
   constructor(path) {
-    this.tBTC = gen('BTC', path && joinPath.join(path, '/coordinator_btc.log'));
-    this.tBCH = gen('BCH', path && joinPath.join(path, '/coordinator_bch.log'));
+    this.tBTC = gen(
+      'BTC',
+      path && joinPath.join(path, '/coordinator_tbtc.log')
+    );
+    this.tBCH = gen(
+      'BCH',
+      path && joinPath.join(path, '/coordinator_tbch.log')
+    );
+    this.BTC = gen('BTC', path && joinPath.join(path, '/coordinator_btc.log'));
+    this.BCH = gen('BCH', path && joinPath.join(path, '/coordinator_bch.log'));
     const OTH = gen('___', path && joinPath.join(path, '/coordinator_oth.log'));
 
     this.undefined = OTH;

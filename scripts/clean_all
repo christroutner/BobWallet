@@ -1,0 +1,7 @@
+#!/bin/bash
+
+./scripts/clean
+
+rm -rf /root/bobwallet
+rm -rf /root/bcash
+rm -rf /root/bcoin

@@ -10,3 +10,8 @@ yarn.lock
 /bcoin
 /bcash
 /logs
+/bob/public/bcash.js
+/bob/public/bcoin.js
+/bob/public/bcash-worker.js
+/bob/public/bcoin-worker.js
+/bobwallet.html

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { observer } from 'mobx-react';
-import { View, Text, Button } from 'react-native';
+import { View, Text, Button, Switch } from 'react-native';
 import Github from '../components/github';
 import TextInput from '../components/textinput';
 import ActionsClient from '../actions/client';
@@ -11,6 +11,9 @@ class Welcome extends Component {
   constructor() {
     super();
     this.handleFileSelect = this.handleFileSelect.bind(this);
+    this.state = {
+      testnet: true,
+    };
   }
 
   handleFileSelect(evt) {
@@ -36,6 +39,7 @@ class Welcome extends Component {
     this.files.removeEventListener('change', this.handleFileSelect, false);
   }
   render() {
+    const { testnet } = this.state;
     return (
       <View style={{ flex: 1, alignItems: 'center' }}>
         <View style={{ flex: 1 }} />
@@ -58,10 +62,10 @@ class Welcome extends Component {
           <View style={{ margin: 10 }}>
             <Button
               color="green"
-              title="Start BTC"
+              title="  Start BTC  "
               onPress={() => {
-                ActionsClient.start('tBTC');
-                ActionsSettings.copyBackup();
+                ActionsClient.start(testnet ? 'tBTC' : 'BTC');
+                // ActionsSettings.copyBackup();
                 ActionsSettings.downloadBackup();
               }}
             />
@@ -70,10 +74,10 @@ class Welcome extends Component {
             <Button
               color="green"
               style={{ padding: 4, minWidth: 110 }}
-              title="Start BCH"
+              title="  Start BCH  "
               onPress={() => {
-                ActionsClient.start('tBCH');
-                ActionsSettings.copyBackup();
+                ActionsClient.start(testnet ? 'tBCH' : 'BCH');
+                // ActionsSettings.copyBackup();
                 ActionsSettings.downloadBackup();
               }}
             />
@@ -82,12 +86,12 @@ class Welcome extends Component {
         <View
           style={{
             marginTop: 16,
-            width: 160,
-            height: 160,
+            width: 120,
+            height: 100,
             padding: 10,
             alignItems: 'center',
             justifyContent: 'center',
-            borderWidth: 10,
+            borderWidth: 6,
             borderColor: 'lightgray',
             borderStyle: 'dashed',
             borderRadius: 10,
@@ -97,7 +101,7 @@ class Welcome extends Component {
             style={{
               color: 'lightgray',
               textAlign: 'center',
-              fontWeight: 'bold',
+              // fontWeight: 'bold',
               userSelect: 'none',
             }}
           >
@@ -108,7 +112,7 @@ class Welcome extends Component {
         <View style={{ height: 8 }} />
         <input type="file" id="files" name="files" style={{ width: 220 }} />
         <TextInput
-          placeholder="OR paste in backup or seed"
+          placeholder="or paste in backup or seed"
           value=""
           onChangeText={text => {
             if (ActionsClient.isValidSeed(text)) {
@@ -117,15 +121,23 @@ Click OK for BCH
 
 Click CANCEL for BTC`);
               if (result) {
-                ActionsClient.start('tBCH', text);
+                ActionsClient.start(testnet ? 'tBCH' : 'BCH', text);
               } else {
-                ActionsClient.start('tBTC', text);
+                ActionsClient.start(testnet ? 'tBTC' : 'BTC', text);
               }
             } else {
               ActionsSettings.setBackup(text);
             }
           }}
         />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text>{testnet ? 'Testnet' : 'Mainnet'}</Text>
+          <View style={{ width: 10 }} />
+          <Switch
+            value={!testnet}
+            onValueChange={value => this.setState({ testnet: !value })}
+          />
+        </View>
         <View style={{ flex: 1 }} />
         <Github />
       </View>

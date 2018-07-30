@@ -6,7 +6,7 @@ rm -f ./bob/public/bcoin-worker.js
 
 git clone https://github.com/bcoin-org/bcoin.git
 cd ./bcoin
-git checkout f00ed98eead4583e6b1020dbff9c4bf2d3a527de
+git checkout 58ea98dadbbbcc2066a1d4c946cea28f1d2f942b
 npm install
 npm run webpack-browser
 cd ..

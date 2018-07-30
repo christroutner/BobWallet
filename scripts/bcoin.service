@@ -5,7 +5,7 @@ Description=Bcoin
 User=bcoin
 Group=bcoin
 Environment=NODE_ENV=production
-ExecStart=/home/pi/.nvm/versions/node/v10.5.0/bin/bcoin --prefix /mnt/usbstorage/bcoin_testnet --network testnet --index-address --index-tx --api-key somepassword --prune
+ExecStart=/home/pi/.nvm/versions/node/v10.5.0/bin/bcoin --network testnet --index-address --api-key somepassword --prune
 Restart=always
 
 [Install]

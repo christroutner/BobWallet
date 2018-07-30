@@ -1,0 +1,20 @@
+#!/bin/bash
+
+systemctl stop bcoin
+systemctl stop bcash
+systemctl stop bobwallet
+systemctl disable bcoin
+systemctl disable bcash
+systemctl disable bobwallet
+
+docker rmi bobwallet
+docker rmi bcoin
+docker rmi bcash
+
+rm -f /etc/systemd/system/bcoin.service
+rm -f /etc/systemd/system/bcash.service
+rm -f /etc/systemd/system/bobwallet.service
+
+# rm -rf /root/bobwallet
+# rm -rf /root/bcash
+# rm -rf /root/bcoin

@@ -11,6 +11,7 @@ const Config = require('./configuration');
       APIKEY: CONFIG.BCOIN_APIKEY,
       URI: CONFIG.BCOIN_URI,
       bcoin: require('bcoin'),
+      CHAIN: CONFIG.TESTNET ? 'tBTC' : 'BTC',
     });
   }
   let bitcoinUtilsCash;
@@ -20,6 +21,7 @@ const Config = require('./configuration');
       APIKEY: CONFIG.BCASH_APIKEY,
       URI: CONFIG.BCASH_URI,
       bcoin: require('bcash'),
+      CHAIN: CONFIG.TESTNET ? 'tBCH' : 'BCH',
     });
   }
 

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+docker rmi bobwallet
+docker build --tag bobwallet -f ./docker/Dockerfile.bobwallet .
